@@ -1,6 +1,7 @@
-pragma solidity ^0.4.25;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.6;
 
-import "../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "../node_modules/openzeppelin-solidity/contracts/utils/math/SafeMath.sol";
 
 contract FlightSuretyData {
     using SafeMath for uint256;
@@ -11,6 +12,19 @@ contract FlightSuretyData {
 
     address private contractOwner;                                      // Account used to deploy contract
     bool private operational = true;                                    // Blocks all state changes throughout the contract if false
+    mapping(address => uint256) private authorizedAppContracts;         // Authorized app contracts
+    struct Airline {
+        string name;
+        bool isActive;
+        bool isRegistered;
+        address airlineAddress;
+    }
+    mapping(address => Airline) private airlines;
+    uint airlinesCount;
+
+    uint8 public constant MIN_MULTIPARTY_AIRLINE = 4;
+    uint256 public constant AIRLINE_REGISTRATION_FEE = 10 ether;
+    uint256 public constant INSURANCE_PRICE_LIMIT = 1 ether;
 
     /********************************************************************************************/
     /*                                       EVENT DEFINITIONS                                  */
@@ -21,12 +35,10 @@ contract FlightSuretyData {
     * @dev Constructor
     *      The deploying account becomes contractOwner
     */
-    constructor
-                                (
-                                ) 
-                                public 
+    constructor()                                                                 
     {
         contractOwner = msg.sender;
+        airlinesCount = 0;
     }
 
     /********************************************************************************************/
@@ -53,6 +65,14 @@ contract FlightSuretyData {
     modifier requireContractOwner()
     {
         require(msg.sender == contractOwner, "Caller is not contract owner");
+        _;
+    }
+
+    /**
+    * @dev Modifier that requires that call to functions are coming from the authorized app contracts only
+    */
+    modifier requireApp(){
+        require(authorizedAppContracts[msg.sender] == 1, 'Caller is not an authorized app' );
         _;
     }
 
@@ -84,9 +104,18 @@ contract FlightSuretyData {
                                 bool mode
                             ) 
                             external
-                            requireContractOwner 
+                            requireContractOwner
     {
         operational = mode;
+    }
+
+
+    function addAppAuthorization() external requireContractOwner {
+        authorizedAppContracts[msg.sender] = 1;
+    }
+
+    function removeAppAuthorization() external requireContractOwner {
+        authorizedAppContracts[msg.sender] = 0;
     }
 
     /********************************************************************************************/
@@ -98,12 +127,17 @@ contract FlightSuretyData {
     *      Can only be called from FlightSuretyApp contract
     *
     */   
-    function registerAirline
-                            (   
-                            )
-                            external
-                            pure
+    function registerAirline(string calldata airlineName, address airlineAddress) external requireIsOperational requireApp
     {
+        require(!airlines[airlineAddress].isRegistered, 'Airline is already registered');
+        require(airlineAddress != address(0),'Invalid airline address');
+        
+        airlines[airlineAddress] = Airline ({
+            name: airlineName, 
+            isActive: false, 
+            airlineAddress: airlineAddress,
+            isRegistered: true
+        });
     }
 
 
@@ -170,11 +204,13 @@ contract FlightSuretyData {
         return keccak256(abi.encodePacked(airline, flight, timestamp));
     }
 
+
+
     /**
     * @dev Fallback function for funding smart contract.
     *
     */
-    function() 
+    fallback() 
                             external 
                             payable 
     {
