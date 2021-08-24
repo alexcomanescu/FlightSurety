@@ -17,6 +17,8 @@ contract FlightSuretyApp {
     /*                                       DATA VARIABLES                                     */
     /********************************************************************************************/
 
+    bool private operational = true; 
+
     // Flight status codees
     uint8 private constant STATUS_CODE_UNKNOWN = 0;
     uint8 private constant STATUS_CODE_ON_TIME = 10;
@@ -25,17 +27,14 @@ contract FlightSuretyApp {
     uint8 private constant STATUS_CODE_LATE_TECHNICAL = 40;
     uint8 private constant STATUS_CODE_LATE_OTHER = 50;
 
+    uint8 public constant MIN_MULTIPARTY_AIRLINE = 4;
+    uint8 public constant MULTIPARTY_QUOTA = 2;
+    uint256 public constant AIRLINE_REGISTRATION_FEE = 10 ether;
+    uint256 public constant INSURANCE_PRICE_LIMIT = 1 ether;
+
+
     address private contractOwner;          // Account used to deploy contract
     FlightSuretyData dataContractProxy;
-    
-
-    struct Flight {
-        bool isRegistered;
-        uint8 statusCode;
-        uint256 updatedTimestamp;        
-        address airline;
-    }
-    mapping(bytes32 => Flight) private flights;
 
  
     /********************************************************************************************/
@@ -53,7 +52,7 @@ contract FlightSuretyApp {
     modifier requireIsOperational() 
     {
          // Modify to call data contract's status
-        require(true, "Contract is currently not operational");  
+        require(operational, "Contract is currently not operational");  
         _;  // All modifiers require an "_" which indicates where the function body will be added
     }
 
@@ -80,7 +79,7 @@ contract FlightSuretyApp {
                                 )                                  
     {
         contractOwner = msg.sender;
-        dataContractProxy = FlightSuretyData(dataContract);
+        dataContractProxy = FlightSuretyData(dataContract);       
     }
 
     /********************************************************************************************/
@@ -88,11 +87,10 @@ contract FlightSuretyApp {
     /********************************************************************************************/
 
     function isOperational() 
-                            public 
-                            pure 
+                            public view                             
                             returns(bool) 
     {
-        return true;  // Modify to call data contract's status
+        return operational;  // Modify to call data contract's status
     }
 
     /********************************************************************************************/
@@ -104,13 +102,12 @@ contract FlightSuretyApp {
     * @dev Add an airline to the registration queue
     *
     */   
-    function registerAirline
-                            (   
-                            )
-                            external
-                            pure
+    function registerAirline( string calldata airlineName, address airlineAddress )
+                            external                            
                             returns(bool success, uint256 votes)
     {
+        dataContractProxy.registerAirline(airlineName, airlineAddress);
+
         return (success, 0);
     }
 
@@ -119,13 +116,10 @@ contract FlightSuretyApp {
     * @dev Register a future flight for insuring.
     *
     */  
-    function registerFlight
-                                (
-                                )
-                                external
-                                pure
+    function registerFlight(string calldata flight, address airlineAddress, uint256 timestamp)
+                                external view requireIsOperational
     {
-
+        dataContractProxy.registerFlight(flight, airlineAddress, timestamp);
     }
     
    /**
@@ -351,9 +345,12 @@ abstract contract FlightSuretyData {
 
     function isOperational() public virtual view returns(bool);
     function setOperatingStatus(bool mode) external virtual;
-    function registerAirline() external virtual;
+    function registerAirline(string calldata airlineName, address airlineAddress) external virtual;
+    function setAirlineState(address airlineAddress, bool isActive) external virtual;    
+    function fundAirline(address airlineAddress) virtual public payable;
+    function registerFlight(string calldata flight, address airlineAddress, uint256 timestamp) virtual public pure;
     function buy() external virtual payable;
     function creditInsurees() virtual external pure;    
     function pay() virtual external  pure;       
-    function fund() virtual public payable;
+    
 }
