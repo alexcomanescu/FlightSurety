@@ -64,7 +64,7 @@ contract FlightSuretyData {
         contractOwner = msg.sender;
         airlinesCount = 0;
 
-        //registerAirline('Airline 1', msg.sender);
+        //registerAirline("Airline 1", msg.sender);
     }
 
     /********************************************************************************************/
@@ -136,12 +136,16 @@ contract FlightSuretyData {
     }
 
 
-    function addAppAuthorization() external requireContractOwner {
-        authorizedAppContracts[msg.sender] = 1;
+    function addAppAuthorization(address appContract) external requireContractOwner {
+        authorizedAppContracts[appContract] = 1;
     }
 
-    function removeAppAuthorization() external requireContractOwner {
-        authorizedAppContracts[msg.sender] = 0;
+    function removeAppAuthorization(address appContract) external requireContractOwner {
+        authorizedAppContracts[appContract] = 0;
+    }
+
+    function test() public pure returns (uint8) {
+        return 2;
     }
 
     /********************************************************************************************/
@@ -153,9 +157,9 @@ contract FlightSuretyData {
     *      Can only be called from FlightSuretyApp contract
     *
     */   
-    function registerAirline(string calldata airlineName, address airlineAddress) 
+    function registerAirline(string memory airlineName, address airlineAddress) 
         public requireIsOperational requireApp
-    {
+    {        
         require(airlines[airlineAddress].airlineAddress != airlineAddress, 'Airline is already registered');
         require(airlineAddress != address(0),'Invalid airline address');
         
@@ -168,6 +172,9 @@ contract FlightSuretyData {
 
             emit AirlineRegistered(airlineAddress);
         }
+        
+
+        emit AirlineRegistered(airlineAddress);
     }
 
     function setAirlineState(address airlineAddress, bool isActive) 

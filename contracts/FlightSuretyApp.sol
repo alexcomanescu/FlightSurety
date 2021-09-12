@@ -6,6 +6,7 @@ pragma solidity ^0.8.6;
 // More info: https://www.nccgroup.trust/us/about-us/newsroom-and-events/blog/2018/november/smart-contract-insecurity-bad-arithmetic/
 
 import "../node_modules/openzeppelin-solidity/contracts/utils/math/SafeMath.sol";
+import "./FlightSuretyData.sol";
 
 /************************************************** */
 /* FlightSurety Smart Contract                      */
@@ -79,12 +80,18 @@ contract FlightSuretyApp {
                                 )                                  
     {
         contractOwner = msg.sender;
-        dataContractProxy = FlightSuretyData(dataContract);       
+        dataContractProxy = FlightSuretyData(payable(dataContract));       
     }
 
     /********************************************************************************************/
     /*                                       UTILITY FUNCTIONS                                  */
     /********************************************************************************************/
+
+    function test() public view returns(address caller1, uint8 caller2){
+        uint8 atest = dataContractProxy.test();
+        address c1 = msg.sender;
+        return (c1, atest);
+    }
 
     function isOperational() 
                             public view                             
@@ -105,9 +112,9 @@ contract FlightSuretyApp {
     function registerAirline( string calldata airlineName, address airlineAddress )
                             external                            
                             returns(bool success, uint256 votes)
-    {
+    {    
         dataContractProxy.registerAirline(airlineName, airlineAddress);
-
+        
         return (success, 0);
     }
 
@@ -117,7 +124,7 @@ contract FlightSuretyApp {
     *
     */  
     function registerFlight(string calldata flight, address airlineAddress, uint256 timestamp)
-                                external view requireIsOperational
+                                external requireIsOperational
     {
         dataContractProxy.registerFlight(flight, airlineAddress, timestamp);
     }
@@ -340,11 +347,12 @@ contract FlightSuretyApp {
 
 }   
 
+/*
 
-abstract contract FlightSuretyData {
+contract FlightSuretyData {
 
-    function isOperational() public virtual view returns(bool);
-    function setOperatingStatus(bool mode) external virtual;
+    function isOperational() external view returns(bool);
+    function setOperatingStatus(bool mode) external;
     function registerAirline(string calldata airlineName, address airlineAddress) external virtual;
     function setAirlineState(address airlineAddress, bool isActive) external virtual;    
     function fundAirline(address airlineAddress) virtual public payable;
@@ -354,3 +362,5 @@ abstract contract FlightSuretyData {
     function pay() virtual external  pure;       
     
 }
+
+*/
