@@ -4,6 +4,16 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+    {
+        "type": "truffle",
+        "request": "launch",
+        "name": "Debug Transaction with Truffle",
+        "stopOnEntry": false,
+        "txHash": "0xcab79c2182e4caf7cb3afa35ed44d4f6788f5d1ca27cb04db729839e8e7c9941",
+        "files": [],
+        "workingDirectory": "${workspaceFolder}/,
+        "providerUrl": "http://127.0.0.1:8545"
+    },
         {
             "type": "pwa-node",
             "request": "launch",
