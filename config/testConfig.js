@@ -5,7 +5,7 @@ var BigNumber = require("bignumber.js");
 var Config = async function (accounts) {
   // These test addresses are useful when you need to add
   // multiple users in test scripts
-  let testAddresses = [
+  /*let testAddresses = [
     "0x69e1CB5cFcA8A311586e3406ed0301C06fb839a2",
     "0xF014343BDFFbED8660A9d8721deC985126f189F3",
     "0x0E79EDbD6A727CfeE09A2b1d0A59F7752d5bf7C9",
@@ -16,12 +16,30 @@ var Config = async function (accounts) {
     "0xc257274276a4e539741ca11b590b9447b26a8051",
     "0x2f2899d6d35b1a48a4fbdc93a37a72f264a9fca7",
   ];
+*/
+
+  let testAddresses = [
+    "0x627306090abaB3A6e1400e9345bC60c78a8BEf57",
+    "0xf17f52151EbEF6C7334FAD080c5704D77216b732",
+    "0xC5fdf4076b8F3A5357c5E395ab970B5B54098Fef",
+    "0x821aEa9a577a9b44299B9c15c88cf3087F3b5544",
+    "0x0d1d4e623D10F9FBA5Db95830F7d3839406C6AF2",
+    "0x2932b7A2355D6fecc4b5c0B6BD44cC31df247a2e",
+    "0x2191eF87E392377ec08E7c08Eb105Ef5448eCED5",
+    "0x0F4F2Ac550A1b4e2280d04c21cEa7EBD822934b5",
+    "0x6330A553Fc93768F612722BB8c2eC78aC90B3bbc",
+    "0x5AEDA56215b167893e80B4fE645BA6d5Bab767DE",
+  ];
 
   let owner = accounts[0];
   let firstAirline = accounts[1];
 
   let flightSuretyData = await FlightSuretyData.new();
-  let flightSuretyApp = await FlightSuretyApp.new(owner);
+  let flightSuretyApp = await FlightSuretyApp.new(flightSuretyData.address);
+
+  console.log("flightSuretyData", flightSuretyData.address);
+  console.log("flightSuretyApp", flightSuretyApp.address);
+  console.log("owner", owner);
 
   return {
     owner: owner,

@@ -18,6 +18,16 @@ contract FlightSuretyApp {
     /*                                       DATA VARIABLES                                     */
     /********************************************************************************************/
 
+    struct Airline {
+        string name;        
+        bool isActive;
+        bool isRegistered;
+        address airlineAddress;
+        uint256 funds;
+        uint256 index;
+        address[] voters;
+    }
+
     bool private operational = true; 
 
     // Flight status codees
@@ -87,10 +97,9 @@ contract FlightSuretyApp {
     /*                                       UTILITY FUNCTIONS                                  */
     /********************************************************************************************/
 
-    function test() public view returns(address caller1, uint8 caller2){
-        uint8 atest = dataContractProxy.test();
-        address c1 = msg.sender;
-        return (c1, atest);
+    function test() public view returns(address caller1, address caller2, address origin){
+        (caller1, origin) = dataContractProxy.test();
+        caller2 = msg.sender;        
     }
 
     function isOperational() 
@@ -110,14 +119,48 @@ contract FlightSuretyApp {
     *
     */   
     function registerAirline( string calldata airlineName, address airlineAddress )
-                            external                            
-                            returns(bool success, uint256 votes)
-    {    
+                            external                                                        
+    {   
+
+        if(dataContractProxy.airlinesCount() == 0){
+            require(contractOwner == msg.sender, "Only the contract owner can register the first airline");
+        } else {                       
+            require(dataContractProxy.getAirlineIsActive(msg.sender), "Only an active airline can register another");
+            
+        }              
+
         dataContractProxy.registerAirline(airlineName, airlineAddress);
-        
-        return (success, 0);
+
+        if(dataContractProxy.airlinesCount() <= MIN_MULTIPARTY_AIRLINE){
+            dataContractProxy.setAirlineRegisteredState(airlineAddress, true);            
+        }            
     }
 
+    function voteAirline(address airlineAddress) external {        
+        uint256 voters = dataContractProxy.voteAirline(airlineAddress);        
+        if(voters > dataContractProxy.airlinesCount().div(MULTIPARTY_QUOTA)){
+            dataContractProxy.setAirlineRegisteredState(airlineAddress, true);
+        }        
+    }
+    
+    
+    function getAirline(address airlineAddress) external view
+        returns(string memory _name, bool _isActive, bool _isRegistered, address _airlineAddress, uint256 _funds, uint256 _index, address[] memory _voters)
+    {        
+        return dataContractProxy.getAirline(airlineAddress);        
+    }    
+
+    function fundAirline(address airlineAddress) public payable requireIsOperational {
+        
+        payable(address(dataContractProxy)).transfer(msg.value);
+
+        dataContractProxy.fundAirline(airlineAddress);
+        
+        if(dataContractProxy.getAirlineFunds(airlineAddress) >= AIRLINE_REGISTRATION_FEE){
+
+            dataContractProxy.setAirlineActiveState(airlineAddress, true);
+        }
+    }
 
    /**
     * @dev Register a future flight for insuring.

@@ -15,14 +15,17 @@ contract FlightSuretyData {
     mapping(address => uint256) private authorizedAppContracts;         // Authorized app contracts
     
     struct Airline {
-        string name;
-        bool isActive;        
+        string name;        
+        bool isActive;
+        bool isRegistered;
         address airlineAddress;
         uint256 funds;
+        uint256 index;
+        address[] voters;
     }
     
-    mapping(address => Airline) private airlines;
-    uint airlinesCount;   
+    mapping(address => Airline) private airlines;    
+    uint256 public airlinesCount;
 
     struct Flight {
         string name;
@@ -51,7 +54,8 @@ contract FlightSuretyData {
     /********************************************************************************************/
 
     event AirlineRegistered(address airline);
-    event AirlineStateChanged(address airline, bool isActive);
+    event AirlineActiveStateChanged(address airline, bool isActive);
+    event AirlineRegisteredStateChanged(address airline, bool isRegistered);
     event FlightStatusChanged(string flightName, address airlineAddress, uint256 timestamp, uint8 status);
     
 
@@ -62,9 +66,7 @@ contract FlightSuretyData {
     constructor()                                                                 
     {
         contractOwner = msg.sender;
-        airlinesCount = 0;
-
-        //registerAirline("Airline 1", msg.sender);
+        airlinesCount = 0;        
     }
 
     /********************************************************************************************/
@@ -102,6 +104,11 @@ contract FlightSuretyData {
         _;
     }
 
+    modifier requireActiveAirline() {
+        require(airlines[msg.sender].isActive, 'Requires active airline');
+        _;
+    }
+    
     /********************************************************************************************/
     /*                                       UTILITY FUNCTIONS                                  */
     /********************************************************************************************/
@@ -144,8 +151,8 @@ contract FlightSuretyData {
         authorizedAppContracts[appContract] = 0;
     }
 
-    function test() public pure returns (uint8) {
-        return 2;
+    function test() public view returns (address, address) {
+        return (msg.sender, tx.origin);
     }
 
     /********************************************************************************************/
@@ -158,7 +165,7 @@ contract FlightSuretyData {
     *
     */   
     function registerAirline(string memory airlineName, address airlineAddress) 
-        public requireIsOperational requireApp
+        public requireIsOperational requireApp 
     {        
         require(airlines[airlineAddress].airlineAddress != airlineAddress, 'Airline is already registered');
         require(airlineAddress != address(0),'Invalid airline address');
@@ -167,30 +174,83 @@ contract FlightSuretyData {
             Airline storage a = airlines[airlineAddress];
             a.name = airlineName;
             a.isActive = false;
-            a.airlineAddress = airlineAddress;            
-            airlinesCount++;
+            a.airlineAddress = airlineAddress;   
+            a.isRegistered = false;                     
+            a.index = airlinesCount;
+            a.voters.push(msg.sender);
+            airlinesCount++;            
 
             emit AirlineRegistered(airlineAddress);
         }
         
 
         emit AirlineRegistered(airlineAddress);
+    }    
+
+    function getAirline(address airlineAddress) external view requireIsOperational requireApp
+        returns(string memory _name, bool _isActive, bool _isRegistered, address _airlineAddress, uint256 _funds, uint256 _index, address[] memory voters)
+    {
+        Airline memory a = airlines[airlineAddress];
+        return (a.name, a.isActive, a.isRegistered, a.airlineAddress, a.funds, a.index, a.voters);
     }
 
-    function setAirlineState(address airlineAddress, bool isActive) 
+    function getAirlineFunds(address airlineAddress) external view returns(uint256) 
+    {
+        return airlines[airlineAddress].funds;
+    }
+
+    function getAirlineVoters(address airlineAddress) external view returns(address[] memory) 
+    {
+        return airlines[airlineAddress].voters;
+    }
+
+    function getAirlineIsActive(address airlineAddress) external view returns(bool) 
+    {
+        return airlines[airlineAddress].isActive;
+    }
+
+    function getAirlineIsRegistered(address airlineAddress) external view returns(bool) 
+    {
+        return airlines[airlineAddress].isRegistered;
+    }
+
+    function setAirlineActiveState(address airlineAddress, bool isActive) 
         external requireIsOperational requireApp
     {
         require(airlines[airlineAddress].airlineAddress == airlineAddress, 'Airline is not registered');
-        Airline storage a = airlines[airlineAddress];            
-        a.isActive = isActive;           
-        emit AirlineStateChanged(airlineAddress, isActive);         
+        airlines[airlineAddress].isActive = isActive;                    
+        emit AirlineActiveStateChanged(airlineAddress, isActive);         
+    }
+
+    function setAirlineRegisteredState(address airlineAddress, bool isRegistered) 
+        external requireIsOperational requireApp
+    {
+        require(airlines[airlineAddress].airlineAddress == airlineAddress, 'Airline is not registered');
+        airlines[airlineAddress].isRegistered = isRegistered;                    
+        emit AirlineRegisteredStateChanged(airlineAddress, isRegistered);
+    }
+
+    function voteAirline(address airlineAddress) external requireActiveAirline returns(uint){
+        Airline storage a = airlines[airlineAddress];
+        bool alreadyVoted = false;
+
+        for(uint i=0;i<a.voters.length;i++){
+            if(a.voters[i] == msg.sender) {
+                alreadyVoted = true;
+                break;
+            }
+        }
+        require(!alreadyVoted, 'Already voted for this airline');
+        a.voters.push(msg.sender);
+
+        return a.voters.length;
     }
 
      /**
     * @dev Fund the airline. The initial funding is enforced in the app contacts. 
     *
     */   
-    function fundAirline(address airlineAddress) public payable requireIsOperational requireApp{
+    function fundAirline(address airlineAddress) public payable requireIsOperational {
         require(airlines[airlineAddress].airlineAddress == airlineAddress, 'Airline is not registered');
         Airline storage a = airlines[airlineAddress];
         a.funds.add(msg.value);
