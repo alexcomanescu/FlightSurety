@@ -18,16 +18,6 @@ contract FlightSuretyApp {
     /*                                       DATA VARIABLES                                     */
     /********************************************************************************************/
 
-    struct Airline {
-        string name;        
-        bool isActive;
-        bool isRegistered;
-        address airlineAddress;
-        uint256 funds;
-        uint256 index;
-        address[] voters;
-    }
-
     bool private operational = true; 
 
     // Flight status codees
@@ -121,12 +111,10 @@ contract FlightSuretyApp {
     function registerAirline( string calldata airlineName, address airlineAddress )
                             external                                                        
     {   
-
         if(dataContractProxy.airlinesCount() == 0){
             require(contractOwner == msg.sender, "Only the contract owner can register the first airline");
         } else {                       
-            require(dataContractProxy.getAirlineIsActive(msg.sender), "Only an active airline can register another");
-            
+            require(dataContractProxy.getAirlineIsActive(msg.sender), "Only an active airline can register another");            
         }              
 
         dataContractProxy.registerAirline(airlineName, airlineAddress);
@@ -150,16 +138,25 @@ contract FlightSuretyApp {
         return dataContractProxy.getAirline(airlineAddress);        
     }    
 
-    function fundAirline(address airlineAddress) public payable requireIsOperational {
-        
+    event AirlineInfo(address airlineAddress);
+    event AirlineNum(string desc, uint x);
+
+    function fundAirline(address airlineAddress) public payable requireIsOperational returns(address){
+
+        emit AirlineInfo(airlineAddress);
+
         payable(address(dataContractProxy)).transfer(msg.value);
 
-        dataContractProxy.fundAirline(airlineAddress);
+        emit AirlineNum('msg value', msg.value);
+        dataContractProxy.fundAirline(airlineAddress, msg.value);
         
+        emit AirlineNum('funds', dataContractProxy.getAirlineFunds(airlineAddress));
+        emit AirlineNum('reg fee', AIRLINE_REGISTRATION_FEE);
         if(dataContractProxy.getAirlineFunds(airlineAddress) >= AIRLINE_REGISTRATION_FEE){
-
             dataContractProxy.setAirlineActiveState(airlineAddress, true);
         }
+
+        return airlineAddress;
     }
 
    /**
@@ -388,22 +385,7 @@ contract FlightSuretyApp {
 
 // endregion
 
+    fallback() external payable {}
+
 }   
 
-/*
-
-contract FlightSuretyData {
-
-    function isOperational() external view returns(bool);
-    function setOperatingStatus(bool mode) external;
-    function registerAirline(string calldata airlineName, address airlineAddress) external virtual;
-    function setAirlineState(address airlineAddress, bool isActive) external virtual;    
-    function fundAirline(address airlineAddress) virtual public payable;
-    function registerFlight(string calldata flight, address airlineAddress, uint256 timestamp) virtual public pure;
-    function buy() external virtual payable;
-    function creditInsurees() virtual external pure;    
-    function pay() virtual external  pure;       
-    
-}
-
-*/

@@ -3,6 +3,7 @@ var BigNumber = require("bignumber.js");
 const assert = require("assert");
 //const { default: Web3 } = require("web3");
 const Web3 = require("web3");
+const Eth = require("web3-eth");
 
 contract("Flight Surety Tests", async (accounts) => {
   var config;
@@ -57,14 +58,30 @@ contract("Flight Surety Tests", async (accounts) => {
   });
 
   it("(airline) fund the first airline", async function () {
+    let airline = await config.flightSuretyData.getAirlineIsRegistered(
+      config.firstAirline
+    );
+    console.log("first airline registered", airline);
+
     let funds = Web3.utils.toWei("11", "ether");
+
+    let cnt = await config.flightSuretyData.airlinesCount();
+
+    console.log("cnt", cnt);
+
     let status = await config.flightSuretyApp.fundAirline(config.firstAirline, {
       from: config.owner,
       value: funds,
     });
-    //console.log("status", status);
-    let airline = await config.flightSuretyApp.getAirline(config.firstAirline);
+    console.log("fund status", status);
+    airline = await config.flightSuretyApp.getAirline(config.firstAirline);
     console.log("funded airline", airline, "funds sent", funds);
+
+    let xy = await web3.eth.getBalance(config.flightSuretyApp.address);
+    console.log("app balance", xy);
+    xy = await web3.eth.getBalance(config.flightSuretyData.address);
+    console.log("data balance", xy);
+
     assert.equal(
       airline._airlineAddress,
       config.firstAirline,
@@ -74,6 +91,7 @@ contract("Flight Surety Tests", async (accounts) => {
     assert.equal(airline._isActive, true, "Airline not active after funding");
   });
 
+  /*
   it("(airline) register next airline by the first airline", async function () {
     let nextAirline = config.testAddresses[2];
 
@@ -86,6 +104,7 @@ contract("Flight Surety Tests", async (accounts) => {
     let airline = await config.flightSuretyApp.getAirline(nextAirline);
     assert.equal(airline._airlineAddress, nextAirline, "Airline not recorded");
   });
+
 
   it(`(multiparty) can block access to setOperatingStatus() for non-Contract Owner account`, async function () {
     // Ensure that access is denied for non-Contract Owner account

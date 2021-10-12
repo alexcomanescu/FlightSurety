@@ -250,13 +250,18 @@ contract FlightSuretyData {
     * @dev Fund the airline. The initial funding is enforced in the app contacts. 
     *
     */   
-    function fundAirline(address airlineAddress) public payable requireIsOperational {
-        require(airlines[airlineAddress].airlineAddress == airlineAddress, 'Airline is not registered');
-        Airline storage a = airlines[airlineAddress];
-        a.funds.add(msg.value);
+    function fundAirline(address airlineAddress, uint funds) public payable requireIsOperational {        
+        require(airlines[airlineAddress].isRegistered, 'Airline is not registered');
+        Airline storage a = airlines[airlineAddress];               
+        a.funds = a.funds.add(funds);
     }
 
-function registerFlight(string calldata flight, address airlineAddress, uint256 timestamp)
+    function compareStrings(string memory a, string memory b) public pure returns (bool) {
+        return (keccak256(abi.encodePacked((a))) == keccak256(abi.encodePacked((b))));
+    }
+
+
+    function registerFlight(string calldata flight, address airlineAddress, uint256 timestamp)
      external requireIsOperational requireApp {
         bytes32 flightKey = getFlightKey(airlineAddress, flight, timestamp);
         require(flights[flightKey].airlineAddress != airlineAddress, 'Flight already registered');
@@ -347,12 +352,12 @@ function registerFlight(string calldata flight, address airlineAddress, uint256 
                             external 
                             payable 
     {
-        fundAirline(msg.sender);
+        //fundAirline(msg.sender, msg.value);
     }
 
 
     receive() external payable {
-        fundAirline(msg.sender);
+        //fundAirline(msg.sender, msg.value);
     }
 
 }
