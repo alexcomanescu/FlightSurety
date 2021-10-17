@@ -30,8 +30,9 @@ contract FlightSuretyApp {
 
     uint8 public constant MIN_MULTIPARTY_AIRLINE = 4;
     uint8 public constant MULTIPARTY_QUOTA = 2;
-    uint256 public constant AIRLINE_REGISTRATION_FEE = 10 ether;
+    uint256 public constant AIRLINE_REGISTRATION_FEE = 1 ether;
     uint256 public constant INSURANCE_PRICE_LIMIT = 1 ether;
+    uint public constant INSURANCE_PAY_MULTIPLIER = 15; //for a 1.5 multiplier set 15
 
 
     address private contractOwner;          // Account used to deploy contract
@@ -111,7 +112,7 @@ contract FlightSuretyApp {
     function registerAirline( string calldata airlineName, address airlineAddress )
                             external                                                        
     {   
-        if(dataContractProxy.airlinesCount() == 0){
+        if(dataContractProxy.airlineCount() == 0){
             require(contractOwner == msg.sender, "Only the contract owner can register the first airline");
         } else {                       
             require(dataContractProxy.getAirlineIsActive(msg.sender), "Only an active airline can register another");            
@@ -119,14 +120,14 @@ contract FlightSuretyApp {
 
         dataContractProxy.registerAirline(airlineName, airlineAddress);
 
-        if(dataContractProxy.airlinesCount() <= MIN_MULTIPARTY_AIRLINE){
+        if(dataContractProxy.airlineCount() <= MIN_MULTIPARTY_AIRLINE){
             dataContractProxy.setAirlineRegisteredState(airlineAddress, true);            
         }            
     }
 
     function voteAirline(address airlineAddress) external {        
-        uint256 voters = dataContractProxy.voteAirline(airlineAddress);        
-        if(voters > dataContractProxy.airlinesCount().div(MULTIPARTY_QUOTA)){
+        uint256 voters = dataContractProxy.voteAirline(airlineAddress, msg.sender);        
+        if(voters > dataContractProxy.airlineCount().div(MULTIPARTY_QUOTA)){
             dataContractProxy.setAirlineRegisteredState(airlineAddress, true);
         }        
     }
@@ -136,22 +137,14 @@ contract FlightSuretyApp {
         returns(string memory _name, bool _isActive, bool _isRegistered, address _airlineAddress, uint256 _funds, uint256 _index, address[] memory _voters)
     {        
         return dataContractProxy.getAirline(airlineAddress);        
-    }    
-
-    event AirlineInfo(address airlineAddress);
-    event AirlineNum(string desc, uint x);
+    }        
 
     function fundAirline(address airlineAddress) public payable requireIsOperational returns(address){
 
-        emit AirlineInfo(airlineAddress);
-
         payable(address(dataContractProxy)).transfer(msg.value);
-
-        emit AirlineNum('msg value', msg.value);
+        
         dataContractProxy.fundAirline(airlineAddress, msg.value);
         
-        emit AirlineNum('funds', dataContractProxy.getAirlineFunds(airlineAddress));
-        emit AirlineNum('reg fee', AIRLINE_REGISTRATION_FEE);
         if(dataContractProxy.getAirlineFunds(airlineAddress) >= AIRLINE_REGISTRATION_FEE){
             dataContractProxy.setAirlineActiveState(airlineAddress, true);
         }
@@ -164,11 +157,27 @@ contract FlightSuretyApp {
     *
     */  
     function registerFlight(string calldata flight, address airlineAddress, uint256 timestamp)
-                                external requireIsOperational
+        external requireIsOperational
     {
         dataContractProxy.registerFlight(flight, airlineAddress, timestamp);
     }
     
+
+    function buyInsurance(string calldata flightName, address airlineAddress, uint256 timestamp) 
+        external payable requireIsOperational
+    {
+        require(msg.value <= INSURANCE_PRICE_LIMIT, 'Insurance price cannot be more than 1 ETH');
+        
+        dataContractProxy.buyInsurance{value:msg.value}(
+            flightName, 
+            airlineAddress, 
+            timestamp, 
+            INSURANCE_PAY_MULTIPLIER, 
+            msg.sender            
+        );
+    }
+
+
    /**
     * @dev Called after oracle has updated flight status
     *

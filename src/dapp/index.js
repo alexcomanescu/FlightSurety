@@ -29,25 +29,11 @@ import "./flightsurety.css";
       });
     });
 
-    DOM.elid("init").addEventListener("click", () => {
-      initialize();
+    DOM.elid("purchase-insurance").addEventListener("click", () => {
+      let flight = DOM.elid("insurance-flight").value;
+      let flightDate = DOM.elid("insurance-flight-date").value;
+      let insuranceValue = DOM.elid("insurance-value").value;
     });
-
-    async function initialize() {
-      for (let i = 0; i < contract.airlines.length; i++) {
-        await contract.registerAirline(
-          "airline " + (i + 1).toString(),
-          contract.airlines[i]
-        );
-        console.log(
-          "Airline " +
-            (i + 1).toString() +
-            ", " +
-            contract.airlines[i] +
-            " is regsitered"
-        );
-      }
-    }
   });
 })();
 

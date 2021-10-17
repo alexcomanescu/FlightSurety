@@ -34,14 +34,30 @@
       <div></div>
 
       <div id="display-wrapper" class="top-20"></div>
+      <div>
+        <p>Purchase insurance</p>
+        <label class="form">Flight</label>
+        <select id="insurance-flight">
+          <option value="1">Flight 1</option>
+          <option value="2">Flight 2</option>
+          <option value="3">Flight 3</option>
+          <option value="4">Flight 4</option>
+        </select>
+        <label class="form">Departure date</label>
+        <select id="insurance-flight-date">
+          <option value="1">Today</option>
+          <option value="2">Tomorrow</option>
+          <option value="3">Day after tomorrow</option>
+          <option value="4">2 days after tomorrow</option>
+        </select>
+        <label class="form">Value (max 1 ETH)</label>
+        <input type="number" min="0.0001" max="1" id="insurance-value" /></div>
+        <btn class="btn btn-primary" id="purchase-insurance">Purchase insurance</btn>
+      </div>
       <div class="row top-20">
         <label class="form">Flight</label>
         <input type="text" id="flight-number" />
         <btn class="btn btn-primary" id="submit-oracle">Submit to Oracles</btn>
-      </div>
-      <div class="row top-20">
-        <label class="form">Init script</label>
-        <btn class="btn btn-primary" id="init">Initialize</btn>
       </div>
     </main>
   </body>

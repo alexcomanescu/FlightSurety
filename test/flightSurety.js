@@ -164,6 +164,25 @@ contract("Flight Surety Tests", async (accounts) => {
       from: accounts[6],
       value: insurancePrice,
     });
+
+    let status = await config.flightSuretyData.checkPassengerInsurance(
+      "Flight 1 1",
+      accounts[1],
+      1,
+      accounts[6]
+    );
+
+    console.log("insurance status", status);
+    assert.equal(
+      status.value,
+      insurancePrice,
+      "Value is not the insurance price"
+    );
+    assert.equal(
+      status.isCredited,
+      false,
+      "The insurance must be not credited"
+    );
   });
 
   it(`(multiparty) can block access to setOperatingStatus() for non-Contract Owner account`, async function () {

@@ -25,7 +25,7 @@ contract FlightSuretyData {
     }
     
     mapping(address => Airline) private airlines;    
-    uint256 public airlinesCount;
+    uint256 public airlineCount;
 
     struct Flight {
         string name;
@@ -66,7 +66,7 @@ contract FlightSuretyData {
     constructor()                                                                 
     {
         contractOwner = msg.sender;
-        airlinesCount = 0;        
+        airlineCount = 0;        
     }
 
     /********************************************************************************************/
@@ -104,10 +104,6 @@ contract FlightSuretyData {
         _;
     }
 
-    modifier requireActiveAirline() {
-        require(airlines[msg.sender].isActive, 'Requires active airline');
-        _;
-    }
     
     /********************************************************************************************/
     /*                                       UTILITY FUNCTIONS                                  */
@@ -176,15 +172,12 @@ contract FlightSuretyData {
             a.isActive = false;
             a.airlineAddress = airlineAddress;   
             a.isRegistered = false;                     
-            a.index = airlinesCount;
+            a.index = airlineCount;
             a.voters.push(msg.sender);
-            airlinesCount++;            
+            airlineCount++;            
 
             emit AirlineRegistered(airlineAddress);
-        }
-        
-
-        emit AirlineRegistered(airlineAddress);
+        }                
     }    
 
     function getAirline(address airlineAddress) external view requireIsOperational requireApp
@@ -230,12 +223,16 @@ contract FlightSuretyData {
         emit AirlineRegisteredStateChanged(airlineAddress, isRegistered);
     }
 
-    function voteAirline(address airlineAddress) external requireActiveAirline returns(uint){
+    function voteAirline(address airlineAddress, address votingAirline) 
+            external requireApp returns(uint)
+    {
+        require(airlines[votingAirline].isActive, 'Requires active airline');
+
         Airline storage a = airlines[airlineAddress];
         bool alreadyVoted = false;
 
         for(uint i=0;i<a.voters.length;i++){
-            if(a.voters[i] == msg.sender) {
+            if(a.voters[i] == votingAirline) {
                 alreadyVoted = true;
                 break;
             }
@@ -262,7 +259,8 @@ contract FlightSuretyData {
 
 
     function registerFlight(string calldata flight, address airlineAddress, uint256 timestamp)
-     external requireIsOperational requireApp {
+        external requireIsOperational requireApp 
+     {
         bytes32 flightKey = getFlightKey(airlineAddress, flight, timestamp);
         require(flights[flightKey].airlineAddress != airlineAddress, 'Flight already registered');
         flights[flightKey] = Flight({
@@ -273,30 +271,68 @@ contract FlightSuretyData {
         });
     }
 
-    function setFlightStatus(string calldata flightName, address airlineAddress, uint256 timestamp, uint8 status) external requireIsOperational requireApp{
+    function setFlightStatus(string calldata flightName, address airlineAddress, uint256 timestamp, uint8 status) 
+        external requireIsOperational requireApp
+    {
         bytes32 flightKey = getFlightKey(airlineAddress, flightName, timestamp);
         require(flights[flightKey].airlineAddress == airlineAddress, 'Could not find flight');
         flights[flightKey].status = status;
         emit FlightStatusChanged(flightName, airlineAddress, timestamp, status);
     }
 
-   /**
-    * @dev Buy insurance for a flight
-    *
-    */   
-    function buyInsurance(string calldata flightName, address airlineAddress, uint256 timestamp, uint multiplier) external payable requireIsOperational requireApp
+    function getFlightStatus(string calldata flightName, address airlineAddress, uint256 timestamp) 
+        external view requireIsOperational returns(uint8)
     {
         bytes32 flightKey = getFlightKey(airlineAddress, flightName, timestamp);
         require(flights[flightKey].airlineAddress == airlineAddress, 'Could not find flight');
-        Flight memory flight = flights[flightKey];
-        require(flight.timestamp > block.timestamp, 'The flight has to be in the future');        
+        return flights[flightKey].status;
+    }
+   /**
+    * @dev Buy insurance for a flight
+    *
+    * The multiplier is multiplied by 10, that is for a 1.5 multiplier you need to set multiplier = 15
+    */   
+    function buyInsurance(
+        string calldata flightName,         
+        address airlineAddress, 
+        uint256 timestamp,         
+        uint multiplier,
+        address passengerAddress
+    ) 
+            external payable requireIsOperational requireApp
+    {
+        bytes32 flightKey = getFlightKey(airlineAddress, flightName, timestamp);
+        require(flights[flightKey].airlineAddress == airlineAddress, 'Could not find flight');
+        //Flight memory flight = flights[flightKey];
+        //require(flight.timestamp > block.timestamp, 'The flight has to be in the future');        
         insuranceList[flightKey].push(Insurance({
-            passengerAddress: msg.sender,
+            passengerAddress: passengerAddress,
             value: msg.value,            
             valueMultiplier: multiplier,
-            toPay: msg.value.mul(multiplier),
+            toPay: msg.value.mul(multiplier).div(10),
             isCredited: false
         }));
+    }
+
+    function checkPassengerInsurance(
+        string calldata flightName,         
+        address airlineAddress, 
+        uint256 timestamp, 
+        address passengerAddress
+    ) 
+            external view requireIsOperational returns(uint value, bool isCredited) 
+    {
+        bytes32 flightKey = getFlightKey(airlineAddress, flightName, timestamp);
+        Insurance[] memory insurances = insuranceList[flightKey];
+        for(uint i = 0; i < insurances.length; i++) {
+            if(insurances[i].passengerAddress == passengerAddress) {
+                return (insurances[i].value, insurances[i].isCredited);
+            }
+        }
+
+        return (0, false);
+        
+
     }
 
     /**
@@ -315,7 +351,6 @@ contract FlightSuretyData {
         }
     }
     
-
     /**
      *  @dev Transfers eligible payout funds to insuree
      *
@@ -326,8 +361,6 @@ contract FlightSuretyData {
         pendingPayments[msg.sender] = 0;
         payable(msg.sender).transfer(pendingPayments[msg.sender]);
     }
-
-
 
     function getFlightKey
                         (
