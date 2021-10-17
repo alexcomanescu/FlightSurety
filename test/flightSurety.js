@@ -5,6 +5,9 @@ const assert = require("assert");
 const Web3 = require("web3");
 const Eth = require("web3-eth");
 
+let airlineFunds = Web3.utils.toWei("1", "ether"),
+  insurancePrice = Web3.utils.toWei("1", "ether");
+
 contract("Flight Surety Tests", async (accounts) => {
   var config;
   before("setup contract", async () => {
@@ -36,19 +39,12 @@ contract("Flight Surety Tests", async (accounts) => {
   });
 
   it("(airline) register first airline by contract owner", async function () {
-    let status = await config.flightSuretyApp.registerAirline(
+    await config.flightSuretyApp.registerAirline(
       "Airline 1",
       config.firstAirline,
       { from: config.owner }
     );
-    //console.log("status", status);
     let airline = await config.flightSuretyApp.getAirline(config.firstAirline);
-    console.log(
-      "first airline",
-      airline._airlineAddress,
-      "config first airline",
-      config.firstAirline
-    );
     assert.equal(
       airline._airlineAddress,
       config.firstAirline,
@@ -58,29 +54,12 @@ contract("Flight Surety Tests", async (accounts) => {
   });
 
   it("(airline) fund the first airline", async function () {
-    let airline = await config.flightSuretyData.getAirlineIsRegistered(
-      config.firstAirline
-    );
-    console.log("first airline registered", airline);
-
-    let funds = Web3.utils.toWei("11", "ether");
-
-    let cnt = await config.flightSuretyData.airlinesCount();
-
-    console.log("cnt", cnt);
-
-    let status = await config.flightSuretyApp.fundAirline(config.firstAirline, {
+    await config.flightSuretyApp.fundAirline(config.firstAirline, {
       from: config.owner,
-      value: funds,
+      value: airlineFunds,
     });
-    console.log("fund status", status);
-    airline = await config.flightSuretyApp.getAirline(config.firstAirline);
-    console.log("funded airline", airline, "funds sent", funds);
 
-    let xy = await web3.eth.getBalance(config.flightSuretyApp.address);
-    console.log("app balance", xy);
-    xy = await web3.eth.getBalance(config.flightSuretyData.address);
-    console.log("data balance", xy);
+    let airline = await config.flightSuretyApp.getAirline(config.firstAirline);
 
     assert.equal(
       airline._airlineAddress,
@@ -91,27 +70,108 @@ contract("Flight Surety Tests", async (accounts) => {
     assert.equal(airline._isActive, true, "Airline not active after funding");
   });
 
-  /*
   it("(airline) register next airline by the first airline", async function () {
-    let nextAirline = config.testAddresses[2];
+    let nextAirline = accounts[2];
 
     let status = await config.flightSuretyApp.registerAirline(
       "Airline 2",
       nextAirline,
       { from: config.firstAirline }
     );
-    //console.log("status", status);
     let airline = await config.flightSuretyApp.getAirline(nextAirline);
     assert.equal(airline._airlineAddress, nextAirline, "Airline not recorded");
   });
 
+  it("register the next 3 airlines", async function () {
+    for (let i = 3; i <= 5; i++) {
+      await config.flightSuretyApp.registerAirline(
+        "Airline " + i.toString(),
+        accounts[i],
+        { from: config.firstAirline }
+      );
+    }
+
+    let airlineCount = await config.flightSuretyData.airlineCount();
+    assert.equal(airlineCount, 5, "There are not 5 rlines");
+  });
+
+  it("fund all first 4 airlines to become active", async function () {
+    for (let i = 1; i <= 4; i++) {
+      await config.flightSuretyApp.fundAirline(accounts[i], {
+        from: config.owner,
+        value: airlineFunds,
+      });
+      let status = await config.flightSuretyData.getAirlineIsActive(
+        accounts[i]
+      );
+
+      assert.equal(status, true, "Airline " + i.toString() + " is not active");
+    }
+  });
+
+  it("vote for the 5th airline", async function () {
+    for (let i = 1; i <= 4; i++) {
+      console.log("vote airline", i);
+      await config.flightSuretyApp.voteAirline(accounts[5], {
+        from: accounts[i],
+      });
+      console.log("end voting airline", i);
+    }
+
+    let status = await config.flightSuretyData.getAirlineIsRegistered(
+      accounts[5]
+    );
+    console.log(status);
+
+    assert.equal(status, true, "5th airline is not registered after voting");
+  });
+
+  it("fund the 5th airline and make it active", async function () {
+    await config.flightSuretyApp.fundAirline(accounts[5], {
+      from: accounts[5],
+      value: airlineFunds,
+    });
+
+    let status = await config.flightSuretyData.getAirlineIsActive(accounts[5]);
+
+    assert.equal(status, true, "Airliine 5 not active");
+  });
+
+  it("register 5 flights for each of 5 airlines", async function () {
+    for (let i = 1; i <= 5; i++) {
+      for (let j = 1; j <= 5; j++) {
+        await config.flightSuretyApp.registerFlight(
+          `Flight ${i} ${j}`,
+          accounts[i],
+          j
+        );
+        let status = await config.flightSuretyData.getFlightStatus(
+          `Flight ${i} ${j}`,
+          accounts[i],
+          j
+        );
+        assert.equal(
+          status,
+          0,
+          "Flight status must be 0 after just registering"
+        );
+      }
+    }
+  });
+
+  it("buy insurance", async function () {
+    await config.flightSuretyApp.buyInsurance("Flight 1 1", accounts[1], 1, {
+      from: accounts[6],
+      value: insurancePrice,
+    });
+  });
 
   it(`(multiparty) can block access to setOperatingStatus() for non-Contract Owner account`, async function () {
     // Ensure that access is denied for non-Contract Owner account
     let accessDenied = false;
     try {
       await config.flightSuretyData.setOperatingStatus(false, {
-        from: config.testAddresses[2],
+        from: accounts[2],
       });
     } catch (e) {
       accessDenied = true;
