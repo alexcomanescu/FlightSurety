@@ -15,18 +15,27 @@ import "./flightsurety.css";
     });
 
     // User-submitted transaction
-    DOM.elid("submit-oracle").addEventListener("click", () => {
+    DOM.elid("submit-oracle").addEventListener("click", async () => {
       let flight = DOM.elid("flight-number").value;
       // Write transaction
-      contract.fetchFlightStatus(flight, (error, result) => {
+
+      try {
+        let receipt = await contract.fetchFlightStatusA(flight);
+        let result = receipt.events["OracleRequest"].returnValues;
+        display("Oracles", "Trigger oracles", [
+          {
+            label: "Fetch Flight Status",
+            value: result.flight + " " + result.timestamp,
+          },
+        ]);
+      } catch (error) {
         display("Oracles", "Trigger oracles", [
           {
             label: "Fetch Flight Status",
             error: error,
-            value: result.flight + " " + result.timestamp,
           },
         ]);
-      });
+      }
     });
 
     DOM.elid("purchase-insurance").addEventListener("click", () => {
@@ -55,3 +64,5 @@ function display(title, description, results) {
   });
   displayDiv.append(section);
 }
+
+async function initializeTestData(contract) {}

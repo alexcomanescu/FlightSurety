@@ -10,7 +10,7 @@ export default class Contract {
       FlightSuretyApp.abi,
       config.appAddress
     );
-    this.initialize(callback);
+    this.this.initialize(callback);
     this.owner = null;
     this.airlines = [];
     this.passengers = [];
@@ -41,24 +41,46 @@ export default class Contract {
       .call({ from: self.owner }, callback);
   }
 
-  fetchFlightStatus(flight, callback) {
-    let self = this;
+  async fetchFlightStatus(flight) {
     let payload = {
-      airline: self.airlines[0],
+      airline: this.airlines[0],
       flight: flight,
       timestamp: Math.floor(Date.now() / 1000),
     };
-    self.flightSuretyApp.methods
+    let response = await this.flightSuretyApp.methods
       .fetchFlightStatus(payload.airline, payload.flight, payload.timestamp)
-      .send({ from: self.owner }, (error, result) => {
-        callback(error, payload);
-      });
+      .send({ from: this.owner });
+    return response;
   }
 
   async registerAirline(name, address) {
-    let self = this;
-    return self.flightSuretyApp.methods
+    let response = await this.flightSuretyApp.methods
       .registerAirline(name, address)
       .call({ from: self.owner });
+
+    return response;
+  }
+
+  async initTestData() {
+    let airlineCount = await this.flightSuretyApp.getAirlineCount();
+
+    if (airlineCount >= 5) {
+      console.log("already initialized");
+      return;
+    }
+
+    let airlineRegistrationFee = Web3.utils.toWei("1", "ether");
+
+    for (let i = 1; i < airlines.length; i++) {
+      await this.flightSuretyApp.registerAirline(
+        "Airline " + (i + 1).toString(),
+        airlines[i],
+        { from: owner }
+      );
+      await this.flightSuretyApp.fundAirline(airlines[i], {
+        from: airlines[i],
+        value: airlineRegistrationFee,
+      });
+    }
   }
 }

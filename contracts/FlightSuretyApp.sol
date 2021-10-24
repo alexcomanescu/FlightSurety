@@ -122,7 +122,10 @@ contract FlightSuretyApp {
 
         if(dataContractProxy.airlineCount() <= MIN_MULTIPARTY_AIRLINE){
             dataContractProxy.setAirlineRegisteredState(airlineAddress, true);            
-        }            
+        }           
+        if(dataContractProxy.airlineCount() == 1){
+            dataContractProxy.setAirlineActiveState(airlineAddress, true);            
+        }
     }
 
     function voteAirline(address airlineAddress) external {        
@@ -177,6 +180,9 @@ contract FlightSuretyApp {
         );
     }
 
+    function getAirlineCount() external view returns(uint) {
+        return dataContractProxy.airlineCount();
+    }
 
    /**
     * @dev Called after oracle has updated flight status
@@ -204,7 +210,7 @@ contract FlightSuretyApp {
                         )
                         external
     {
-        uint8 index = getRandomIndex(msg.sender);
+        uint8 index = getRandomIndex(msg.sender);        
 
         // Generate a unique key for storing the request
         bytes32 key = keccak256(abi.encodePacked(index, airline, flight, timestamp));
