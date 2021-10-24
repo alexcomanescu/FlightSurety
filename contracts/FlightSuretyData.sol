@@ -168,12 +168,13 @@ contract FlightSuretyData {
         
         if(airlines[airlineAddress].airlineAddress != airlineAddress){
             Airline storage a = airlines[airlineAddress];
+            a.voters.push(msg.sender);
+            a.index = airlineCount;            
             a.name = airlineName;
             a.isActive = false;
             a.airlineAddress = airlineAddress;   
-            a.isRegistered = false;                     
-            a.index = airlineCount;
-            a.voters.push(msg.sender);
+            a.isRegistered = false;                                 
+            
             airlineCount++;            
 
             emit AirlineRegistered(airlineAddress);
@@ -210,7 +211,7 @@ contract FlightSuretyData {
     function setAirlineActiveState(address airlineAddress, bool isActive) 
         external requireIsOperational requireApp
     {
-        require(airlines[airlineAddress].airlineAddress == airlineAddress, 'Airline is not registered');
+        require(airlines[airlineAddress].airlineAddress == airlineAddress, 'Airline is not recorded');
         airlines[airlineAddress].isActive = isActive;                    
         emit AirlineActiveStateChanged(airlineAddress, isActive);         
     }
@@ -218,7 +219,7 @@ contract FlightSuretyData {
     function setAirlineRegisteredState(address airlineAddress, bool isRegistered) 
         external requireIsOperational requireApp
     {
-        require(airlines[airlineAddress].airlineAddress == airlineAddress, 'Airline is not registered');
+        require(airlines[airlineAddress].airlineAddress == airlineAddress, 'Airline is not recorded');
         airlines[airlineAddress].isRegistered = isRegistered;                    
         emit AirlineRegisteredStateChanged(airlineAddress, isRegistered);
     }

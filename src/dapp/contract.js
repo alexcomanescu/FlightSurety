@@ -10,7 +10,7 @@ export default class Contract {
       FlightSuretyApp.abi,
       config.appAddress
     );
-    this.this.initialize(callback);
+    this.initialize(callback);
     this.owner = null;
     this.airlines = [];
     this.passengers = [];
@@ -61,26 +61,65 @@ export default class Contract {
     return response;
   }
 
-  async initTestData() {
-    let airlineCount = await this.flightSuretyApp.getAirlineCount();
+  async buyInsurance(passenger, airline, flight, flightDate, value) {
+    let response = await this.flightSuretyApp.methods
+      .buyInsurance(flight, airline, flightDate)
+      .send({ from: passenger, value: value });
 
-    if (airlineCount >= 5) {
+    return response;
+  }
+
+  async initTestData() {
+    let airlineCount = await this.flightSuretyApp.methods
+      .getAirlineCount()
+      .call();
+
+    console.log("first airline", this.airlines[0]);
+    let a = await this.flightSuretyApp.methods
+      .getAirline(this.airlines[0])
+      .call();
+
+    console.log(a);
+
+    if (airlineCount >= 4) {
       console.log("already initialized");
-      return;
+      return false;
     }
 
-    let airlineRegistrationFee = Web3.utils.toWei("1", "ether");
+    console.log("register second airline");
 
-    for (let i = 1; i < airlines.length; i++) {
-      await this.flightSuretyApp.registerAirline(
-        "Airline " + (i + 1).toString(),
-        airlines[i],
-        { from: owner }
-      );
-      await this.flightSuretyApp.fundAirline(airlines[i], {
-        from: airlines[i],
+    try {
+      let firstAirline = this.airlines[0];
+
+      let airlineRegistrationFee = Web3.utils.toWei("1", "ether");
+
+      await this.flightSuretyApp.methods.fundAirline(firstAirline).send({
+        from: firstAirline,
         value: airlineRegistrationFee,
       });
+
+      for (let i = 1; i < this.airlines.length - 1; i++) {
+        let airline = this.airlines[i],
+          name = "Airline " + (i + 1).toString();
+
+        await this.flightSuretyApp.methods
+          .registerAirline(name, airline)
+          .send({ from: firstAirline, gas: "2000000" });
+
+        await this.flightSuretyApp.methods.fundAirline(airline).send({
+          from: airline,
+          value: airlineRegistrationFee,
+        });
+
+        for (let j = 1; j <= 5; j++) {
+          let flight = `Flight ${i} ${j}`;
+          await this.flightSuretyApp.methods.registerFlight(flight, airline, j);
+        }
+      }
+    } catch (error) {
+      console.log("Error initializing test data", error);
     }
+
+    return true;
   }
 }

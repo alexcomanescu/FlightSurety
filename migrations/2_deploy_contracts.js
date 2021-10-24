@@ -16,9 +16,28 @@ module.exports = async function (deployer, network, accounts) {
 
   let app = await FlightSuretyApp.deployed();
 
+  console.log("Registering the first airline: ", firstAirline);
+
   await app.registerAirline("Airline 1", firstAirline, {
     from: owner,
   });
+
+  let x = await app.getAirline(firstAirline);
+  console.log("First airline retrieved", x);
+
+  /*
+  console.log("register the second airline");
+
+  await app.registerAirline("Airline 2", accounts[2], {
+    from: firstAirline,
+  });
+
+  x = await app.getAirline(accounts[2]);
+  console.log("Second airline retrieved", x);
+
+  */
+
+  console.log("OK");
 
   let config = {
     localhost: {

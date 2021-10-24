@@ -118,14 +118,16 @@ contract FlightSuretyApp {
             require(dataContractProxy.getAirlineIsActive(msg.sender), "Only an active airline can register another");            
         }              
 
+        
         dataContractProxy.registerAirline(airlineName, airlineAddress);
 
         if(dataContractProxy.airlineCount() <= MIN_MULTIPARTY_AIRLINE){
             dataContractProxy.setAirlineRegisteredState(airlineAddress, true);            
-        }           
+        }                   
         if(dataContractProxy.airlineCount() == 1){
             dataContractProxy.setAirlineActiveState(airlineAddress, true);            
         }
+        
     }
 
     function voteAirline(address airlineAddress) external {        

@@ -12,11 +12,11 @@ contract("Flight Surety Tests", async (accounts) => {
   var config;
   before("setup contract", async () => {
     config = await Test.Config(accounts);
-    /*
+
     await config.flightSuretyData.addAppAuthorization(
       config.flightSuretyApp.address,
       { from: config.owner }
-    );*/
+    );
   });
 
   it("test", async function () {
@@ -39,7 +39,7 @@ contract("Flight Surety Tests", async (accounts) => {
     assert.equal(status, true, "Incorrect initial operating status value");
   });
 
-  /*it("(airline) register first airline by contract owner", async function () {
+  it("(airline) register first airline by contract owner", async function () {
     await config.flightSuretyApp.registerAirline(
       "Airline 1",
       config.firstAirline,
@@ -52,7 +52,7 @@ contract("Flight Surety Tests", async (accounts) => {
       "Airline not recorded"
     );
     assert.equal(airline._isRegistered, true, "Airline not registered");
-  }); */
+  });
 
   it("(airline) fund the first airline", async function () {
     await config.flightSuretyApp.fundAirline(config.firstAirline, {
