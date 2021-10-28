@@ -58,6 +58,8 @@ contract FlightSuretyData {
     event AirlineRegisteredStateChanged(address airline, bool isRegistered);
     event FlightStatusChanged(string flightName, address airlineAddress, uint256 timestamp, uint8 status);
     
+    event FlightRegistered(bytes32 flightKey);
+    event InsuranceBought(bytes32 flightKey, address passenger, uint value);
 
     /**
     * @dev Constructor
@@ -261,7 +263,7 @@ contract FlightSuretyData {
 
     function registerFlight(string calldata flight, address airlineAddress, uint256 timestamp)
         external requireIsOperational requireApp 
-     {
+     {            
         bytes32 flightKey = getFlightKey(airlineAddress, flight, timestamp);
         require(flights[flightKey].airlineAddress != airlineAddress, 'Flight already registered');
         flights[flightKey] = Flight({
@@ -270,6 +272,8 @@ contract FlightSuretyData {
             timestamp: timestamp,
             status: 0
         });
+
+        emit FlightRegistered(flightKey);
     }
 
     function setFlightStatus(string calldata flightName, address airlineAddress, uint256 timestamp, uint8 status) 
@@ -303,6 +307,9 @@ contract FlightSuretyData {
             external payable requireIsOperational requireApp
     {
         bytes32 flightKey = getFlightKey(airlineAddress, flightName, timestamp);
+
+        emit InsuranceBought(flightKey, passengerAddress, msg.value);
+
         require(flights[flightKey].airlineAddress == airlineAddress, 'Could not find flight');
         //Flight memory flight = flights[flightKey];
         //require(flight.timestamp > block.timestamp, 'The flight has to be in the future');        

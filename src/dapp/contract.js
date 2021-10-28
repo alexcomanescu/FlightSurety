@@ -1,14 +1,20 @@
 import FlightSuretyApp from "../../build/contracts/FlightSuretyApp.json";
+import FlightSuretyData from "../../build/contracts/FlightSuretyData.json";
 import Config from "./config.json";
 import Web3 from "web3";
 
 export default class Contract {
   constructor(network, callback) {
     let config = Config[network];
-    this.web3 = new Web3(new Web3.providers.HttpProvider(config.url));
+    this.web3 = new Web3(new Web3.providers.WebsocketProvider(config.url));
     this.flightSuretyApp = new this.web3.eth.Contract(
       FlightSuretyApp.abi,
       config.appAddress
+    );
+
+    this.flightSuretyData = new this.web3.eth.Contract(
+      FlightSuretyData.abi,
+      config.dataAddress
     );
     this.initialize(callback);
     this.owner = null;
@@ -32,6 +38,19 @@ export default class Contract {
 
       callback();
     });
+
+    this.flightSuretyData.events.allEvents(null, this.seeEvents);
+  }
+
+  seeEvents(error, eventLog) {
+    console.log(
+      "Data event",
+      eventLog ? eventLog.event : "no event log!",
+      eventLog
+    );
+    if (error) {
+      console.log(error);
+    }
   }
 
   isOperational(callback) {
@@ -62,14 +81,18 @@ export default class Contract {
   }
 
   async buyInsurance(passenger, airline, flight, flightDate, value) {
+    let weiValue = Web3.utils.toWei(value.toString(), "ether");
+
     let response = await this.flightSuretyApp.methods
-      .buyInsurance(flight, airline, flightDate)
-      .send({ from: passenger, value: value });
+      .buyInsurance(flight, airline, parseInt(flightDate))
+      .send({ from: passenger, value: weiValue });
 
     return response;
   }
 
   async initTestData() {
+    console.log("start init test data");
+
     let airlineCount = await this.flightSuretyApp.methods
       .getAirlineCount()
       .call();
@@ -85,8 +108,6 @@ export default class Contract {
       console.log("already initialized");
       return false;
     }
-
-    console.log("register second airline");
 
     try {
       let firstAirline = this.airlines[0];
@@ -111,9 +132,14 @@ export default class Contract {
           value: airlineRegistrationFee,
         });
 
-        for (let j = 1; j <= 5; j++) {
+        for (let j = 1; j <= 4; j++) {
           let flight = `Flight ${i} ${j}`;
-          await this.flightSuretyApp.methods.registerFlight(flight, airline, j);
+          await this.flightSuretyApp.methods
+            .registerFlight(flight, airline, j)
+            .send({
+              from: airline,
+              gas: "2000000",
+            });
         }
       }
     } catch (error) {
