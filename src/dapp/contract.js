@@ -3,6 +3,9 @@ import FlightSuretyData from "../../build/contracts/FlightSuretyData.json";
 import Config from "./config.json";
 import Web3 from "web3";
 
+const expensiveCallGas = "2000000";
+const airlineRegistrationFee = Web3.utils.toWei("1", "ether");
+
 export default class Contract {
   constructor(network, callback) {
     let config = Config[network];
@@ -85,7 +88,7 @@ export default class Contract {
 
     let response = await this.flightSuretyApp.methods
       .buyInsurance(flight, airline, parseInt(flightDate))
-      .send({ from: passenger, value: weiValue });
+      .send({ from: passenger, value: weiValue, gas: expensiveCallGas });
 
     return response;
   }
@@ -104,15 +107,13 @@ export default class Contract {
 
     console.log(a);
 
-    if (airlineCount >= 4) {
+    if (airlineCount >= 2) {
       console.log("already initialized");
       return false;
     }
 
     try {
       let firstAirline = this.airlines[0];
-
-      let airlineRegistrationFee = Web3.utils.toWei("1", "ether");
 
       await this.flightSuretyApp.methods.fundAirline(firstAirline).send({
         from: firstAirline,
@@ -125,20 +126,20 @@ export default class Contract {
 
         await this.flightSuretyApp.methods
           .registerAirline(name, airline)
-          .send({ from: firstAirline, gas: "2000000" });
+          .send({ from: firstAirline, gas: expensiveCallGas });
 
         await this.flightSuretyApp.methods.fundAirline(airline).send({
           from: airline,
           value: airlineRegistrationFee,
         });
 
-        for (let j = 1; j <= 4; j++) {
+        for (let j = 1; j <= 1; j++) {
           let flight = `Flight ${i} ${j}`;
           await this.flightSuretyApp.methods
             .registerFlight(flight, airline, j)
             .send({
               from: airline,
-              gas: "2000000",
+              gas: expensiveCallGas,
             });
         }
       }

@@ -112,18 +112,14 @@ contract("Flight Surety Tests", async (accounts) => {
 
   it("vote for the 5th airline", async function () {
     for (let i = 1; i <= 4; i++) {
-      console.log("vote airline", i);
       await config.flightSuretyApp.voteAirline(accounts[5], {
         from: accounts[i],
       });
-      console.log("end voting airline", i);
     }
 
     let status = await config.flightSuretyData.getAirlineIsRegistered(
       accounts[5]
     );
-    console.log(status);
-
     assert.equal(status, true, "5th airline is not registered after voting");
   });
 

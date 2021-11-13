@@ -212,7 +212,7 @@ contract FlightSuretyApp {
                         )
                         external
     {
-        uint8 index = getRandomIndex(msg.sender);        
+        uint8 index = getRandomIndex(msg.sender);
 
         // Generate a unique key for storing the request
         bytes32 key = keccak256(abi.encodePacked(index, airline, flight, timestamp));
@@ -221,13 +221,7 @@ contract FlightSuretyApp {
         respInfo.requester = msg.sender;
         respInfo.isOpen = true;
 
-    /*
-        oracleResponses[key] = ResponseInfo({
-                                                requester: msg.sender,
-                                                isOpen: true
-                                            });
-*/
-        emit OracleRequest(index, airline, flight, timestamp);
+        emit OracleRequest(index, airline, flight, timestamp);                
     } 
 
 

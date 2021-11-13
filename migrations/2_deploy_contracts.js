@@ -22,23 +22,6 @@ module.exports = async function (deployer, network, accounts) {
     from: owner,
   });
 
-  let x = await app.getAirline(firstAirline);
-  console.log("First airline retrieved", x);
-
-  /*
-  console.log("register the second airline");
-
-  await app.registerAirline("Airline 2", accounts[2], {
-    from: firstAirline,
-  });
-
-  x = await app.getAirline(accounts[2]);
-  console.log("Second airline retrieved", x);
-
-  */
-
-  console.log("OK");
-
   let config = {
     localhost: {
       url: "ws://localhost:8545",

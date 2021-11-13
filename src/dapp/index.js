@@ -17,16 +17,22 @@ import "./flightsurety.css";
     });
 
     let insuranceFlightCmb = DOM.elid("insurance-flight");
-    for (let i = 1; i <= 4; i++) {
-      for (let j = 1; j <= 5; j++) {
+    for (let i = 1; i <= 1; i++) {
+      for (let j = 1; j <= 4; j++) {
         let flight = `Flight ${i} ${j}`,
           option = DOM.makeElement("option", flight);
 
-        airlineFlights[flight] = contract.airlines[i - 1];
+        airlineFlights[flight] = contract.airlines[i];
 
         insuranceFlightCmb.options.add(option);
       }
     }
+
+    insuranceFlightCmb.addEventListener("change", () => {
+      let flightDateCmb = DOM.elid("insurance-flight-date");
+      flightDateCmb.value =
+        insuranceFlightCmb.value[insuranceFlightCmb.value.length - 1];
+    });
 
     let insurancePassengerCmb = DOM.elid("insurance-passenger");
     for (let i = 1; i <= 5; i++) {

@@ -58,8 +58,8 @@ contract FlightSuretyData {
     event AirlineRegisteredStateChanged(address airline, bool isRegistered);
     event FlightStatusChanged(string flightName, address airlineAddress, uint256 timestamp, uint8 status);
     
-    event FlightRegistered(bytes32 flightKey);
-    event InsuranceBought(bytes32 flightKey, address passenger, uint value);
+    event FlightRegistered(string flightName, address airline, uint timestamp, bytes32 flightKey);
+    event InsuranceBought(string flightName, address airline, uint timestamp, bytes32 flightKey, address passenger, uint value);
 
     /**
     * @dev Constructor
@@ -273,7 +273,7 @@ contract FlightSuretyData {
             status: 0
         });
 
-        emit FlightRegistered(flightKey);
+        emit FlightRegistered(flight, airlineAddress, timestamp, flightKey);
     }
 
     function setFlightStatus(string calldata flightName, address airlineAddress, uint256 timestamp, uint8 status) 
@@ -306,20 +306,21 @@ contract FlightSuretyData {
     ) 
             external payable requireIsOperational requireApp
     {
-        bytes32 flightKey = getFlightKey(airlineAddress, flightName, timestamp);
-
-        emit InsuranceBought(flightKey, passengerAddress, msg.value);
+        bytes32 flightKey = getFlightKey(airlineAddress, flightName, timestamp);        
 
         require(flights[flightKey].airlineAddress == airlineAddress, 'Could not find flight');
         //Flight memory flight = flights[flightKey];
         //require(flight.timestamp > block.timestamp, 'The flight has to be in the future');        
+        
         insuranceList[flightKey].push(Insurance({
             passengerAddress: passengerAddress,
             value: msg.value,            
             valueMultiplier: multiplier,
             toPay: msg.value.mul(multiplier).div(10),
             isCredited: false
-        }));
+        })); 
+
+        emit InsuranceBought(flightName, airlineAddress, timestamp, flightKey, passengerAddress, msg.value);
     }
 
     function checkPassengerInsurance(
