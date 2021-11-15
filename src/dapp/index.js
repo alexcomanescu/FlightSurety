@@ -111,7 +111,7 @@ import "./flightsurety.css";
   );
 })();
 
-function displayEvent(error, eventData) {
+function displayEvent(error, eventData, source) {
   if (error) {
     display("Event error", "Error", [
       {
@@ -123,11 +123,20 @@ function displayEvent(error, eventData) {
   }
 
   let eventInfo = "";
-  Object.keys(eventData.returnValues).forEach((key) => {
-    eventInfo += `${key}: ${eventData.returnValues[key]}, `;
-  });
 
-  display("Event Info", eventData.event, [
+  switch (eventData.event) {
+    case "FlightStatusInfo":
+      eventInfo = `${eventData.returnValues.flight}: ${getStatusDescription(
+        eventData.returnValues.status
+      )}`;
+      break;
+    default:
+      Object.keys(eventData.returnValues).forEach((key) => {
+        eventInfo += `${key}: ${eventData.returnValues[key]}, `;
+      });
+  }
+
+  display(source + " event info", eventData.event, [
     { label: "Event data", value: eventInfo },
   ]);
 }
@@ -149,4 +158,23 @@ function display(title, description, results) {
     section.appendChild(row);
   });
   displayDiv.append(section);
+}
+
+function getStatusDescription(statusCode) {
+  switch (parseInt(statusCode)) {
+    case 0:
+      return "Unknown (0)";
+    case 10:
+      return "On time (10)";
+    case 20:
+      return "Late airline (20)";
+    case 30:
+      return "Late weather (30)";
+    case 40:
+      return "Late technical (40)";
+    case 50:
+      return "Late other (50)";
+    default:
+      return "Unknown code " + statusCode;
+  }
 }

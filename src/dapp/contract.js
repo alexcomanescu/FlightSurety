@@ -41,17 +41,17 @@ export default class Contract {
       }
 
       this.flightSuretyData.events.allEvents(null, (error, eventData) =>
-        this.seeEvents(error, eventData)
+        this.seeEvents(error, eventData, "Data contract")
       );
       this.flightSuretyApp.events.allEvents(null, (error, eventData) =>
-        this.seeEvents(error, eventData)
+        this.seeEvents(error, eventData, "App contract")
       );
 
       callback();
     });
   }
 
-  seeEvents(error, eventLog) {
+  seeEvents(error, eventLog, source) {
     console.log(
       "Data event",
       eventLog ? eventLog.event : "no event log!",
@@ -61,7 +61,7 @@ export default class Contract {
       console.log(error);
     }
     if (this.showEventCallback) {
-      this.showEventCallback(error, eventLog);
+      this.showEventCallback(error, eventLog, source);
     }
   }
 

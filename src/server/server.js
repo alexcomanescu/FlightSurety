@@ -15,6 +15,15 @@ const STATUS_CODE_LATE_WEATHER = 30;
 const STATUS_CODE_LATE_TECHNICAL = 40;
 const STATUS_CODE_LATE_OTHER = 50;
 
+const STATUSES = [
+  STATUS_CODE_UNKNOWN,
+  STATUS_CODE_ON_TIME,
+  STATUS_CODE_LATE_AIRLINE,
+  STATUS_CODE_LATE_WEATHER,
+  STATUS_CODE_LATE_TECHNICAL,
+  STATUS_CODE_LATE_OTHER,
+];
+
 const ORACLES_COUNT = 5;
 const ORACLE_REGISTRATION_FEE = Web3.utils.toWei("1", "ether");
 const EXPENSIVE_CALL_GAS = "2000000";
@@ -55,7 +64,8 @@ flightSuretyApp.events.OracleRequest(
       if (indexes[0] == index || indexes[1] == index || indexes[2] == index) {
         console.log("Matching oracle found: ", oracle.address);
 
-        let statusCode = 10;
+        let statusCode =
+          STATUSES[Math.floor(Math.random() * STATUSES.length - 1)];
 
         flightSuretyApp.methods
           .submitOracleResponse(index, airline, flight, timestamp, statusCode)

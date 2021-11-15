@@ -43,3 +43,8 @@ input {
 #insurance-flight-date {
   background-color: #fff;
 }
+.feature-section {
+  border: 1px solid #262626;
+  padding: 5px;
+  margin: 3px;
+}
