@@ -198,8 +198,11 @@ contract FlightSuretyApp {
                                     uint8 statusCode
                                 )
                                 internal
-                                pure
+                                
     {
+        if(statusCode == STATUS_CODE_LATE_AIRLINE){
+            dataContractProxy.creditInsurees(flight, airline, timestamp);
+        }
     }
 
 
@@ -234,7 +237,7 @@ contract FlightSuretyApp {
     uint256 public constant REGISTRATION_FEE = 1 ether;
 
     // Number of oracles that must respond for valid status
-    uint256 private constant MIN_RESPONSES = 3;
+    uint256 private constant MIN_RESPONSES = 1;
 
 
     struct Oracle {
@@ -328,6 +331,8 @@ contract FlightSuretyApp {
         // oracles respond with the *** same *** information
         emit OracleReport(airline, flight, timestamp, statusCode);
         if (oracleResponses[key].responses[statusCode].length >= MIN_RESPONSES) {
+
+            oracleResponses[key].isOpen = false;
 
             emit FlightStatusInfo(airline, flight, timestamp, statusCode);
 

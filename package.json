@@ -5,13 +5,15 @@
   "directories": {
     "test": "test"
   },
+  "main": "./src/server/index.js",
   "repository": "https://github.com/techbubble/flightsurety",
   "license": "MIT",
   "scripts": {
     "test": "truffle test ./test/flightSurety.js",
     "dapp": "webpack serve --mode development --config webpack.config.dapp.js",
     "dapp:prod": "webpack --mode production  --config webpack.config.dapp.js",
-    "server": "rm -rf ./build/server && webpack serve --mode development --config webpack.config.server.js",
+    "server_old": "rm -rf ./build/server && webpack serve --mode development --config webpack.config.server.js",
+    "server": "node ./src/server/index.js",
     "ganache": "ganache-cli -m \"candy maple cake sugar pudding cream honey rich smooth crumble sweet treat\" --account_keys_path keys.json"
   },
   "author": "Nik Kalyani <nik@kalyani.com> https://www.kalyani.com",

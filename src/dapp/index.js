@@ -7,102 +7,130 @@ import "./flightsurety.css";
 
   let airlineFlights = {};
 
-  let contract = new Contract("localhost", () => {
-    contract.initTestData().then((result) => {
-      if (result) {
-        console.log("test data initialized");
-      } else {
-        console.log("test data initialization skipped - already initialized");
-      }
-    });
-
-    let insuranceFlightCmb = DOM.elid("insurance-flight");
-    for (let i = 1; i <= 1; i++) {
-      for (let j = 1; j <= 4; j++) {
-        let flight = `Flight ${i} ${j}`,
-          option = DOM.makeElement("option", flight);
-
-        airlineFlights[flight] = contract.airlines[i];
-
-        insuranceFlightCmb.options.add(option);
-      }
-    }
-
-    insuranceFlightCmb.addEventListener("change", () => {
-      let flightDateCmb = DOM.elid("insurance-flight-date");
-      flightDateCmb.value =
-        insuranceFlightCmb.value[insuranceFlightCmb.value.length - 1];
-    });
-
-    let insurancePassengerCmb = DOM.elid("insurance-passenger");
-    for (let i = 1; i <= 5; i++) {
-      let option = DOM.makeElement("option", {
-        textContent: `Passenger ${i} (${contract.passengers[i - 1]})`,
-        value: contract.passengers[i - 1],
+  let contract = new Contract(
+    "localhost",
+    () => {
+      contract.initTestData().then((result) => {
+        if (result) {
+          console.log("test data initialized");
+        } else {
+          console.log("test data initialization skipped - already initialized");
+        }
       });
-      insurancePassengerCmb.options.add(option);
-    }
 
-    // Read transaction
-    contract.isOperational((error, result) => {
-      console.log(error, result);
-      display("Operational Status", "Check if contract is operational", [
-        { label: "Operational Status", error: error, value: result },
-      ]);
-    });
+      let insuranceFlightCmb = DOM.elid("insurance-flight");
+      for (let i = 1; i <= 1; i++) {
+        for (let j = 1; j <= 4; j++) {
+          let flight = `Flight ${i} ${j}`,
+            option = DOM.makeElement("option", flight);
 
-    // User-submitted transaction
-    DOM.elid("submit-oracle").addEventListener("click", async () => {
-      let flight = DOM.elid("flight-number").value;
-      // Write transaction
+          airlineFlights[flight] = contract.airlines[i];
 
-      try {
-        let receipt = await contract.fetchFlightStatusA(flight);
-        let result = receipt.events["OracleRequest"].returnValues;
-        display("Oracles", "Trigger oracles", [
-          {
-            label: "Fetch Flight Status",
-            value: result.flight + " " + result.timestamp,
-          },
-        ]);
-      } catch (error) {
-        display("Oracles", "Trigger oracles", [
-          {
-            label: "Fetch Flight Status Error",
-            error: error,
-          },
-        ]);
+          insuranceFlightCmb.options.add(option);
+        }
       }
-    });
 
-    DOM.elid("buy-insurance").addEventListener("click", async () => {
-      let passenger = DOM.elid("insurance-passenger").value;
-      let flight = DOM.elid("insurance-flight").value;
-      let flightDate = DOM.elid("insurance-flight-date").value;
-      let insuranceValue = DOM.elid("insurance-value").value;
-      let airline = airlineFlights[flight];
+      insuranceFlightCmb.addEventListener("change", () => {
+        let flightDateCmb = DOM.elid("insurance-flight-date");
+        flightDateCmb.value =
+          insuranceFlightCmb.value[insuranceFlightCmb.value.length - 1];
+      });
 
-      try {
-        let result = contract.buyInsurance(
-          passenger,
-          airline,
-          flight,
-          flightDate,
-          insuranceValue
-        );
+      DOM.elid("insurance-flight-oracles").innerHTML =
+        insuranceFlightCmb.innerHTML;
 
-        console.log("buy insurance", result);
-      } catch (error) {
-        display("Purchase insurance", "Purchase", [
-          {
-            label: "Insurance purchase error",
-            error: error,
-          },
-        ]);
+      let insurancePassengerCmb = DOM.elid("insurance-passenger");
+      for (let i = 1; i <= 5; i++) {
+        let option = DOM.makeElement("option", {
+          textContent: `Passenger ${i} (${contract.passengers[i - 1]})`,
+          value: contract.passengers[i - 1],
+        });
+        insurancePassengerCmb.options.add(option);
       }
-    });
-  });
+
+      // Read transaction
+      contract.isOperational((error, result) => {
+        console.log(error, result);
+        display("Operational Status", "Check if contract is operational", [
+          { label: "Operational Status", error: error, value: result },
+        ]);
+      });
+
+      // User-submitted transaction
+      DOM.elid("submit-oracle").addEventListener("click", async () => {
+        let flight = DOM.elid("insurance-flight-oracles").value;
+        // Write transaction
+
+        try {
+          let receipt = await contract.fetchFlightStatus(flight);
+          let result = receipt.events["OracleRequest"].returnValues;
+          display("Oracles", "Trigger oracles", [
+            {
+              label: "Fetch Flight Status",
+              value: result.flight + " " + result.timestamp,
+            },
+          ]);
+        } catch (error) {
+          display("Oracles", "Trigger oracles", [
+            {
+              label: "Fetch Flight Status Error",
+              error: error,
+            },
+          ]);
+        }
+      });
+
+      DOM.elid("buy-insurance").addEventListener("click", async () => {
+        let passenger = DOM.elid("insurance-passenger").value;
+        let flight = DOM.elid("insurance-flight").value;
+        let flightDate = DOM.elid("insurance-flight-date").value;
+        let insuranceValue = DOM.elid("insurance-value").value;
+        let airline = airlineFlights[flight];
+
+        try {
+          let result = contract.buyInsurance(
+            passenger,
+            airline,
+            flight,
+            flightDate,
+            insuranceValue
+          );
+
+          console.log("buy insurance", result);
+        } catch (error) {
+          display("Purchase insurance", "Purchase", [
+            {
+              label: "Insurance purchase error",
+              error: error,
+            },
+          ]);
+        }
+      });
+    },
+    displayEvent
+  );
 })();
+
+function displayEvent(error, eventData) {
+  if (error) {
+    display("Event error", "Error", [
+      {
+        label: "Event error",
+        error: error,
+      },
+    ]);
+    return;
+  }
+
+  let eventInfo = "";
+  Object.keys(eventData.returnValues).forEach((key) => {
+    eventInfo += `${key}: ${eventData.returnValues[key]}, `;
+  });
+
+  display("Event Info", eventData.event, [
+    { label: "Event data", value: eventInfo },
+  ]);
+}
 
 function display(title, description, results) {
   let displayDiv = DOM.elid("display-wrapper");
@@ -122,5 +150,3 @@ function display(title, description, results) {
   });
   displayDiv.append(section);
 }
-
-async function initializeTestData(contract) {}

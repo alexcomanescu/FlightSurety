@@ -27,6 +27,7 @@ module.exports = {
   plugins: [
     new StartServerPlugin({
       name: "server.js",
+      nodeArgs: ["--inspect"],
     }),
     new webpack.HotModuleReplacementPlugin(),
     new webpack.NoEmitOnErrorsPlugin(),
