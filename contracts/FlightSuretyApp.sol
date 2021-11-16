@@ -201,7 +201,7 @@ contract FlightSuretyApp {
                                 
     {
         if(statusCode == STATUS_CODE_LATE_AIRLINE){
-            dataContractProxy.creditInsurees(flight, airline, timestamp);
+            //dataContractProxy.creditInsurees(flight, airline, timestamp);
         }
     }
 
@@ -224,7 +224,7 @@ contract FlightSuretyApp {
         respInfo.requester = msg.sender;
         respInfo.isOpen = true;
 
-        emit OracleRequest(index, airline, flight, timestamp);                
+        emit OracleRequest(index, airline, flight, timestamp);            
     } 
 
 
@@ -237,7 +237,7 @@ contract FlightSuretyApp {
     uint256 public constant REGISTRATION_FEE = 1 ether;
 
     // Number of oracles that must respond for valid status
-    uint256 private constant MIN_RESPONSES = 1;
+    uint256 private constant MIN_RESPONSES = 3;
 
 
     struct Oracle {
@@ -282,6 +282,8 @@ contract FlightSuretyApp {
         // Require registration fee
         require(msg.value >= REGISTRATION_FEE, "Registration fee is required");
 
+        require(!oracles[msg.sender].isRegistered, "The oracle is already registered");
+
         uint8[3] memory indexes = generateIndexes(msg.sender);
 
         oracles[msg.sender] = Oracle({
@@ -300,9 +302,7 @@ contract FlightSuretyApp {
         require(oracles[msg.sender].isRegistered, "Not registered as an oracle");
 
         return oracles[msg.sender].indexes;
-    }
-
-
+    }  
 
 
     // Called by oracle when a response is available to an outstanding request
@@ -319,10 +319,13 @@ contract FlightSuretyApp {
                         )
                         external
     {
-        require((oracles[msg.sender].indexes[0] == index) || (oracles[msg.sender].indexes[1] == index) || (oracles[msg.sender].indexes[2] == index), "Index does not match oracle request");
+        require((oracles[msg.sender].indexes[0] == index) || 
+                (oracles[msg.sender].indexes[1] == index) || 
+                (oracles[msg.sender].indexes[2] == index), "Index does not match oracle request");
 
 
         bytes32 key = keccak256(abi.encodePacked(index, airline, flight, timestamp)); 
+                
         require(oracleResponses[key].isOpen, "Flight or timestamp do not match oracle request");
 
         oracleResponses[key].responses[statusCode].push(msg.sender);
@@ -338,7 +341,7 @@ contract FlightSuretyApp {
 
             // Handle flight status as appropriate
             processFlightStatus(airline, flight, timestamp, statusCode);
-        }
+        } 
     }
 
 

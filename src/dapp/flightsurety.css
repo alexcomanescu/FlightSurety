@@ -48,3 +48,7 @@ input {
   padding: 5px;
   margin: 3px;
 }
+#display-wrapper {
+  max-height: 70vh;
+  overflow-y: auto;
+}

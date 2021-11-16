@@ -132,11 +132,14 @@ function displayEvent(error, eventData, source) {
       break;
     default:
       Object.keys(eventData.returnValues).forEach((key) => {
-        eventInfo += `${key}: ${eventData.returnValues[key]}, `;
+        let pattern = /(?<!\S)\d(?!\S)/i;
+        if (!pattern.test(key)) {
+          eventInfo += `${key}: ${eventData.returnValues[key]}, `;
+        }
       });
   }
 
-  display(source + " event info", eventData.event, [
+  display(source + " event: ", eventData.event, [
     { label: "Event data", value: eventInfo },
   ]);
 }
@@ -144,11 +147,13 @@ function displayEvent(error, eventData, source) {
 function display(title, description, results) {
   let displayDiv = DOM.elid("display-wrapper");
   let section = DOM.section();
-  section.appendChild(DOM.h2(title));
-  section.appendChild(DOM.h5(description));
+  section.appendChild(
+    DOM.span({ className: "mr-2 font-weight-bold text-primary" }, title)
+  );
+  section.appendChild(DOM.span(description));
   results.map((result) => {
     let row = section.appendChild(DOM.div({ className: "row" }));
-    row.appendChild(DOM.div({ className: "col-sm-4 field" }, result.label));
+    row.appendChild(DOM.div({ className: "col-sm-2 field" }, result.label));
     row.appendChild(
       DOM.div(
         { className: "col-sm-8 field-value" },
@@ -158,6 +163,7 @@ function display(title, description, results) {
     section.appendChild(row);
   });
   displayDiv.append(section);
+  section.scrollIntoView();
 }
 
 function getStatusDescription(statusCode) {
