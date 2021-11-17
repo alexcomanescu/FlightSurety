@@ -34,6 +34,8 @@ import "./flightsurety.css";
         let flightDateCmb = DOM.elid("insurance-flight-date");
         flightDateCmb.value =
           insuranceFlightCmb.value[insuranceFlightCmb.value.length - 1];
+        DOM.elid("airline-info").textContent =
+          "Airline: " + airlineFlights[insuranceFlightCmb.value];
       });
 
       DOM.elid("insurance-flight-oracles").innerHTML =
@@ -48,7 +50,7 @@ import "./flightsurety.css";
         insurancePassengerCmb.options.add(option);
       }
 
-      dom.elid("insurance-passenger-payment").innerHTML =
+      DOM.elid("insurance-passenger-payment").innerHTML =
         insurancePassengerCmb.innerHTML;
 
       // Read transaction
@@ -113,7 +115,9 @@ import "./flightsurety.css";
       DOM.elid("check-pending-payments").addEventListener("click", async () => {
         let passengerAddress = DOM.elid("insurance-passenger-payment").value;
         try {
-          let result = await contract.checkPassengerPendingPayments();
+          let result = await contract.checkPassengerPendingPayments(
+            passengerAddress
+          );
           display("Pending payments", passengerAddress, [
             { label: "Value", value: result },
           ]);
@@ -133,7 +137,7 @@ import "./flightsurety.css";
         async () => {
           let passengerAddress = DOM.elid("insurance-passenger-payment").value;
           try {
-            let result = await contract.checkPassengerBalance();
+            let result = await contract.checkPassengerBalance(passengerAddress);
             display("Balance", passengerAddress, [
               { label: "Value", value: result },
             ]);

@@ -74,7 +74,7 @@ export default class Contract {
 
   async fetchFlightStatus(flight) {
     let payload = {
-      airline: this.airlines[0],
+      airline: this.airlines[1],
       flight: flight,
       timestamp: 1, // Math.floor(Date.now() / 1000),
     };
@@ -103,13 +103,15 @@ export default class Contract {
   }
 
   async checkPassengerBalance(passenger) {
-    return await Web3.eth.getBalance(passenger);
+    let value = await this.web3.eth.getBalance(passenger);
+    return Web3.utils.fromWei(value, "ether") + " ETH";
   }
 
   async checkPassengerPendingPayments(passenger) {
-    return await this.flightSuretyApp.methods
+    let value = await this.flightSuretyApp.methods
       .getPassengerPendingPayments(passenger)
       .call({ from: passenger });
+    return Web3.utils.fromWei(value, "ether") + " ETH";
   }
 
   async payPassenger(passenger) {

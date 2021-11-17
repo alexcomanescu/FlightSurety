@@ -353,11 +353,16 @@ contract FlightSuretyData {
     {        
         bytes32 flightKey = getFlightKey(airlineAddress, flightName, timestamp);        
         require(flights[flightKey].airlineAddress == airlineAddress, 'Could not find flight');
-        require(flights[flightKey].timestamp < block.timestamp, 'The flight has to be in the past');        
+        //require(flights[flightKey].timestamp < block.timestamp, 'The flight has to be in the past');        
         for(uint i = 0; i < insuranceList[flightKey].length; i++){
             if(!insuranceList[flightKey][i].isCredited) {
                 insuranceList[flightKey][i].isCredited = true;
-                pendingPayments[insuranceList[flightKey][i].passengerAddress].add(insuranceList[flightKey][i].toPay);
+
+                uint256 payments = pendingPayments[insuranceList[flightKey][i].passengerAddress];
+
+                payments = payments.add(insuranceList[flightKey][i].toPay);
+
+                pendingPayments[insuranceList[flightKey][i].passengerAddress] = payments;
 
                 emit PassengerCredited(insuranceList[flightKey][i].passengerAddress, insuranceList[flightKey][i].toPay);
             }

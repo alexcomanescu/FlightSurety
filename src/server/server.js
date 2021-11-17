@@ -78,7 +78,7 @@ async function sendOracleResponse(index, flight, timestamp, airline) {
 
       let statusIndex = Math.floor(Math.random() * (STATUSES.length - 1));
 
-      let statusCode = STATUSES[statusIndex];
+      let statusCode = 20; // STATUSES[statusIndex];
       //console.log(statusIndex, statusCode);
 
       try {
