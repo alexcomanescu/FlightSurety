@@ -182,6 +182,18 @@ contract FlightSuretyApp {
         );
     }
 
+
+    function getPassengerPendingPayments(address passengerAddress) 
+        external view requireIsOperational returns(uint)
+    {
+        return dataContractProxy.getPassengerPendingPayments(passengerAddress);
+    }
+
+    function payPassenger() external payable
+    {
+        dataContractProxy.pay(msg.sender);
+    }
+
     function getAirlineCount() external view returns(uint) {
         return dataContractProxy.airlineCount();
     }

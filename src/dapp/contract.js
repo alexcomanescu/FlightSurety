@@ -102,6 +102,20 @@ export default class Contract {
     return response;
   }
 
+  async checkPassengerBalance(passenger) {
+    return await Web3.eth.getBalance(passenger);
+  }
+
+  async checkPassengerPendingPayments(passenger) {
+    return await this.flightSuretyApp.methods
+      .getPassengerPendingPayments(passenger)
+      .call({ from: passenger });
+  }
+
+  async payPassenger(passenger) {
+    await this.flightSuretyApp.methods.payPassenger().send({ from: passenger });
+  }
+
   async initTestData() {
     console.log("start init test data");
 

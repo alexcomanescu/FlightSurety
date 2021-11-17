@@ -24,7 +24,7 @@ const STATUSES = [
   STATUS_CODE_LATE_OTHER,
 ];
 
-const ORACLES_COUNT = 20;
+const ORACLES_COUNT = 30;
 const ORACLE_REGISTRATION_FEE = Web3.utils.toWei("1", "ether");
 const EXPENSIVE_CALL_GAS = "2000000";
 

@@ -59,7 +59,9 @@ contract FlightSuretyData {
     event FlightStatusChanged(string flightName, address airlineAddress, uint256 timestamp, uint8 status);
     
     event FlightRegistered(string flightName, address airline, uint timestamp, bytes32 flightKey);
-    event InsuranceBought(string flightName, address airline, uint timestamp, bytes32 flightKey, address passenger, uint value);
+    event InsuranceBought(string flightName, address airline, uint timestamp, bytes32 flightKey, address passenger, uint value);    
+    event PassengerPaid(address passengerAddress, uint value);
+    event PassengerCredited(address passengerAddress, uint value);
 
     /**
     * @dev Constructor
@@ -356,19 +358,31 @@ contract FlightSuretyData {
             if(!insuranceList[flightKey][i].isCredited) {
                 insuranceList[flightKey][i].isCredited = true;
                 pendingPayments[insuranceList[flightKey][i].passengerAddress].add(insuranceList[flightKey][i].toPay);
+
+                emit PassengerCredited(insuranceList[flightKey][i].passengerAddress, insuranceList[flightKey][i].toPay);
             }
         }
+    }
+
+    function getPassengerPendingPayments(address passengerAddress) 
+        external view requireIsOperational requireApp returns(uint)
+    {
+        return pendingPayments[passengerAddress];
     }
     
     /**
      *  @dev Transfers eligible payout funds to insuree
      *
     */
-    function pay()  external requireIsOperational requireApp
+    function pay(address passengerAddress)  external requireIsOperational requireApp
     {
-        require(pendingPayments[msg.sender] > 0, 'No funds to withdraw');
-        pendingPayments[msg.sender] = 0;
-        payable(msg.sender).transfer(pendingPayments[msg.sender]);
+        require(pendingPayments[passengerAddress] > 0, 'No funds to withdraw');
+        uint amountToPay;
+        amountToPay = pendingPayments[passengerAddress];
+        pendingPayments[passengerAddress] = 0;
+        payable(passengerAddress).transfer(amountToPay);
+
+        emit PassengerPaid(passengerAddress, amountToPay);
     }
 
     function getFlightKey

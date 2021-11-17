@@ -14,7 +14,7 @@
     "dapp:prod": "webpack --mode production  --config webpack.config.dapp.js",
     "server_old": "rm -rf ./build/server && webpack serve --mode development --config webpack.config.server.js",
     "server": "node ./src/server/index.js",
-    "ganache": "ganache-cli -a 25 -m \"candy maple cake sugar pudding cream honey rich smooth crumble sweet treat\" --account_keys_path keys.json"
+    "ganache": "ganache-cli -a 30 -m \"candy maple cake sugar pudding cream honey rich smooth crumble sweet treat\" --account_keys_path keys.json"
   },
   "author": "Nik Kalyani <nik@kalyani.com> https://www.kalyani.com",
   "devDependencies": {

@@ -48,6 +48,9 @@ import "./flightsurety.css";
         insurancePassengerCmb.options.add(option);
       }
 
+      dom.elid("insurance-passenger-payment").innerHTML =
+        insurancePassengerCmb.innerHTML;
+
       // Read transaction
       contract.isOperational((error, result) => {
         console.log(error, result);
@@ -101,6 +104,62 @@ import "./flightsurety.css";
           display("Purchase insurance", "Purchase", [
             {
               label: "Insurance purchase error",
+              error: error,
+            },
+          ]);
+        }
+      });
+
+      DOM.elid("check-pending-payments").addEventListener("click", async () => {
+        let passengerAddress = DOM.elid("insurance-passenger-payment").value;
+        try {
+          let result = await contract.checkPassengerPendingPayments();
+          display("Pending payments", passengerAddress, [
+            { label: "Value", value: result },
+          ]);
+        } catch (error) {
+          console.log(error);
+          display("Check pending payments error", "Error", [
+            {
+              label: "error",
+              error: error,
+            },
+          ]);
+        }
+      });
+
+      DOM.elid("check-passenger-balance").addEventListener(
+        "click",
+        async () => {
+          let passengerAddress = DOM.elid("insurance-passenger-payment").value;
+          try {
+            let result = await contract.checkPassengerBalance();
+            display("Balance", passengerAddress, [
+              { label: "Value", value: result },
+            ]);
+          } catch (error) {
+            console.log(error);
+            display("Check balance error", "Error", [
+              {
+                label: "error",
+                error: error,
+              },
+            ]);
+          }
+        }
+      );
+
+      DOM.elid("pay-passenger").addEventListener("click", async () => {
+        let passengerAddress = DOM.elid("insurance-passenger-payment").value;
+        try {
+          await contract
+            .payPassenger(passengerAddress)
+            .send({ from: passengerAddress });
+        } catch (error) {
+          console.log(error);
+          display("Pay passenger error", "Error", [
+            {
+              label: "error",
               error: error,
             },
           ]);
