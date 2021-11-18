@@ -227,7 +227,7 @@ contract FlightSuretyApp {
                         )
                         external
     {
-        uint8 index = 2; //getRandomIndex(msg.sender);
+        uint8 index = getRandomIndex(msg.sender);
 
         // Generate a unique key for storing the request
         bytes32 key = keccak256(abi.encodePacked(index, airline, flight, timestamp));
@@ -378,12 +378,8 @@ contract FlightSuretyApp {
                             internal
                             returns(uint8[3] memory)
     {
-        uint8[3] memory indexes;
+        uint8[3] memory indexes;        
 
-        indexes[0] = 1;
-        indexes[1] = 2;
-        indexes[2] = 3;
-/*
         indexes[0] = getRandomIndex(account);
         
         indexes[1] = indexes[0];
@@ -395,7 +391,7 @@ contract FlightSuretyApp {
         while((indexes[2] == indexes[0]) || (indexes[2] == indexes[1])) {
             indexes[2] = getRandomIndex(account);
         }
-*/
+
         return indexes;
     }
 

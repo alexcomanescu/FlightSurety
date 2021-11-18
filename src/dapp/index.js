@@ -19,8 +19,8 @@ import "./flightsurety.css";
       });
 
       let insuranceFlightCmb = DOM.elid("insurance-flight");
-      for (let i = 1; i <= 1; i++) {
-        for (let j = 1; j <= 4; j++) {
+      for (let i = 1; i <= contract.airlines.length; i++) {
+        for (let j = 1; j <= contract.FLIGHT_COUNT_PER_AIRLINE; j++) {
           let flight = `Flight ${i} ${j}`,
             option = DOM.makeElement("option", flight);
 
@@ -40,6 +40,9 @@ import "./flightsurety.css";
 
       DOM.elid("insurance-flight-oracles").innerHTML =
         insuranceFlightCmb.innerHTML;
+
+      DOM.elid("airline-info").textContent =
+        "Airline: " + airlineFlights[insuranceFlightCmb.value];
 
       let insurancePassengerCmb = DOM.elid("insurance-passenger");
       for (let i = 1; i <= 5; i++) {
@@ -64,10 +67,16 @@ import "./flightsurety.css";
       // User-submitted transaction
       DOM.elid("submit-oracle").addEventListener("click", async () => {
         let flight = DOM.elid("insurance-flight-oracles").value;
+        let airline = airlineFlights[flight];
+        let timestamp = parseInt(flight[flight.length - 1]);
         // Write transaction
 
         try {
-          let receipt = await contract.fetchFlightStatus(flight);
+          let receipt = await contract.fetchFlightStatus(
+            flight,
+            airline,
+            timestamp
+          );
           let result = receipt.events["OracleRequest"].returnValues;
           display("Oracles", "Trigger oracles", [
             {
@@ -156,9 +165,7 @@ import "./flightsurety.css";
       DOM.elid("pay-passenger").addEventListener("click", async () => {
         let passengerAddress = DOM.elid("insurance-passenger-payment").value;
         try {
-          await contract
-            .payPassenger(passengerAddress)
-            .send({ from: passengerAddress });
+          await contract.payPassenger(passengerAddress);
         } catch (error) {
           console.log(error);
           display("Pay passenger error", "Error", [

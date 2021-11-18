@@ -24,6 +24,8 @@ export default class Contract {
     this.owner = null;
     this.airlines = [];
     this.passengers = [];
+
+    this.FLIGHT_COUNT_PER_AIRLINE = 4;
   }
 
   initialize(callback) {
@@ -72,11 +74,11 @@ export default class Contract {
       .call({ from: self.owner }, callback);
   }
 
-  async fetchFlightStatus(flight) {
+  async fetchFlightStatus(flight, airline, timestamp) {
     let payload = {
-      airline: this.airlines[1],
+      airline: airline,
       flight: flight,
-      timestamp: 1, // Math.floor(Date.now() / 1000),
+      timestamp: timestamp,
     };
     let response = await this.flightSuretyApp.methods
       .fetchFlightStatus(payload.airline, payload.flight, payload.timestamp)
@@ -158,7 +160,7 @@ export default class Contract {
           value: AIRLINE_REGISTRATION_FEE,
         });
 
-        for (let j = 1; j <= 1; j++) {
+        for (let j = 1; j <= this.FLIGHT_COUNT_PER_AIRLINE; j++) {
           let flight = `Flight ${i} ${j}`;
           await this.flightSuretyApp.methods
             .registerFlight(flight, airline, j)
